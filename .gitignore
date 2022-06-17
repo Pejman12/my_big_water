@@ -1,0 +1,5 @@
+# OBJ FILES
+*.o
+
+# BINARY
+main
