@@ -1,27 +1,37 @@
 #include "obj_loader.hh"
+
 #include <GL/glew.h>
 #include <stdio.h>
 #include <vector>
 
+std::vector<GLfloat> vertex_buff_data;
+std::vector<GLfloat> normal_buff_data;
 
+void getVectorFromMesh(objl::Mesh mesh) {
 
+    std::cout << mesh.MeshName << std::endl;
+
+    for (int i = 0; i < mesh.Vertices.size(); ++i) {
+        vertex_buff_data.push_back(mesh.Vertices[i].Position.X);
+        vertex_buff_data.push_back(mesh.Vertices[i].Position.Y);
+        vertex_buff_data.push_back(mesh.Vertices[i].Position.Z);
+
+        normal_buff_data.push_back(mesh.Vertices[i].Normal.X);
+        normal_buff_data.push_back(mesh.Vertices[i].Normal.Y);
+        normal_buff_data.push_back(mesh.Vertices[i].Normal.Z);
+    }
+}
 
 int main() {
     objl::Loader loader;
     loader.LoadFile("Erlaufsee.obj");
-    auto vertices_vector = loader.LoadedMeshes[0].Vertices;
-    std::vector<GLfloat> vertex_buff_data;
-    std::vector<GLfloat> normal_buff_data;
-    for (int i = 0; i < vertices_vector.size(); ++i) {
-        vertex_buff_data.push_back(vertices_vector[i].Position.X);
-        vertex_buff_data.push_back(vertices_vector[i].Position.Y);
-        vertex_buff_data.push_back(vertices_vector[i].Position.Z);
 
-        normal_buff_data.push_back(vertices_vector[i].Normal.X);
-        normal_buff_data.push_back(vertices_vector[i].Normal.Y);
-        normal_buff_data.push_back(vertices_vector[i].Normal.Z);
+    for (int i = 0; i < loader.LoadedMeshes.size(); i++)
+    {
+        getVectorFromMesh(loader.LoadedMeshes[i]);
     }
 
+    /*
     // Display vertex_buff_data
     std::cout << "vertex_buff_data :" << std::endl;
     for (int i = 0; i < vertex_buff_data.size(); ++i) {
@@ -32,6 +42,6 @@ int main() {
     for (int i = 0; i < normal_buff_data.size(); ++i) {
         std::cout << normal_buff_data[i] << ", ";
     }
-
+    */
     return 0;
 }
