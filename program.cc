@@ -10,25 +10,25 @@
 #define BUFF_SIZE 4096
 
 program::program() {
-    program_id_ = glCreateProgram();
+    program_id = glCreateProgram();
     TEST_OPENGL_ERROR();
-    if (program_id_ == 0) {
+    if (program_id == 0) {
         std::cerr << "Error: glCreateProgram() failed" << std::endl;
         std::exit(-1);
     }
 }
 
 program::~program() {
-    glDeleteProgram(program_id_);
+    glDeleteProgram(program_id);
     TEST_OPENGL_ERROR();
 
-    glDeleteShader(vertex_shd_id_);
+    glDeleteShader(vertex_shd_id);
     TEST_OPENGL_ERROR();
 
-    glDeleteShader(fragment_shd_id_);
+    glDeleteShader(fragment_shd_id);
     TEST_OPENGL_ERROR();
 
-    program_id_ = 0;
+    program_id = 0;
 }
 
 char *program::getlog(GLint id, GLenum type)
@@ -48,7 +48,7 @@ char *program::getlog(GLint id, GLenum type)
         if (type == GL_SHADER)
             glGetShaderInfoLog(id, log_size, &log_size, log);
         else if (type == GL_PROGRAM)
-            glGetProgramInfoLog(program_id_, log_size, &log_size, log);
+            glGetProgramInfoLog(program_id, log_size, &log_size, log);
         return log;
     }
 
@@ -58,10 +58,10 @@ char *program::getlog(GLint id, GLenum type)
 void program::set_shader_id(GLuint shd_id, GLenum type)
 {
     if (type == GL_VERTEX_SHADER)
-        vertex_shd_id_ = shd_id;
+        vertex_shd_id = shd_id;
 
     if (type == GL_FRAGMENT_SHADER)
-        fragment_shd_id_ = shd_id;
+        fragment_shd_id = shd_id;
 }
 
 static char *load_file(const char *filename)
@@ -123,7 +123,7 @@ void program::add_shader(const char *filename, GLenum type) {
         return;
     set_shader_id(shader_id, type);
 
-    glAttachShader(program_id_, shader_id);
+    glAttachShader(program_id, shader_id);
     TEST_OPENGL_ERROR();
 }
 
@@ -131,18 +131,18 @@ void program::link_program()
 {
     GLint link_status = GL_TRUE;
 
-    glLinkProgram(program_id_);
+    glLinkProgram(program_id);
     TEST_OPENGL_ERROR();
 
-    glGetProgramiv(program_id_, GL_LINK_STATUS, &link_status);
+    glGetProgramiv(program_id, GL_LINK_STATUS, &link_status);
     if (link_status != GL_TRUE)
     {
-        char *program_log = getlog(program_id_, GL_PROGRAM);
+        char *program_log = getlog(program_id, GL_PROGRAM);
         if (program_log)
             errx(-1, "Program %s\n", program_log);
     }
 
-    ready_ = true;
+    ready = true;
 }
 
 std::shared_ptr<program> program::make_program(const char *vertex_shader_src, const char *fragment_shader_src)
@@ -159,8 +159,20 @@ std::shared_ptr<program> program::make_program(const char *vertex_shader_src, co
 void program::use()
 {
     if (isready()) {
-        glUseProgram(program_id_);
+        glUseProgram(program_id);
         TEST_OPENGL_ERROR();
     } else
         errx(-1, "Program is not ready");
+}
+
+void program::add_object(const std::string &name, int nb_vbo) {
+    objects.emplace(name, nb_vbo);
+}
+
+const object &program::get_object(const std::string &name) const {
+    return objects.at(name);
+}
+
+void program::add_object_vbo(const std::string &name, const std::string &vbo_name, const std::vector<float> &data, GLint unit_size) {
+    objects.at(name).add_vbo(vbo_name, data, program_id, unit_size);
 }

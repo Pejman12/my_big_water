@@ -8,9 +8,9 @@
 
 CC = g++
 
-CPP_FILES = matrix.cc program.cc
+CPP_FILES = matrix.cc program.cc object.cc
 CPP_FILES +=
-HXX_FILES = matrix.hh program.hh object_vbo.hh
+HXX_FILES = matrix.hh program.hh object.hh object_vbo.hh
 HXX_FILES +=
 OBJ_FILES = $(CPP_FILES:.cc=.o)
 

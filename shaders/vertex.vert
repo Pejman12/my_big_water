@@ -1,6 +1,7 @@
 #version 450
 
 in vec3 position;
+in vec3 normalFlat;
 in vec3 normalSmooth;
 
 uniform vec3 color;

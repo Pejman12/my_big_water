@@ -43,9 +43,8 @@ namespace mygl
         auto up = glm::normalize(glm::vec3(upX, upY, upZ));
 
         auto s = glm::cross(f, up);
-        auto u = glm::cross(s, f);
 
-        mat = glm::mat4(s[0], u[0], -f[0], 0, s[1], u[1], -f[1], 0, s[2], u[2],
+        mat = glm::mat4(s[0], up[0], -f[0], 0, s[1], up[1], -f[1], 0, s[2], up[2],
                         -f[2], 0, -eyeX, -eyeY, -eyeZ, 1);
     }
 

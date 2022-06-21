@@ -12,21 +12,23 @@ GLuint teapot_vao_id;
 shared_program prog = nullptr;
 
 void window_resize(int width, int height) {
-    //std::cout << "glViewport(0,0,"<< width << "," << height << ");TEST_OPENGL_ERROR();" << std::endl;
     glViewport(0,0,width,height);TEST_OPENGL_ERROR();
 }
 
 void display()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    TEST_OPENGL_ERROR();
-    glBindVertexArray(teapot_vao_id);
-    TEST_OPENGL_ERROR();
+    for (auto &obj : prog->get_objects()) {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        TEST_OPENGL_ERROR();
+        glBindVertexArray(obj.second.get_vao_id());
+        TEST_OPENGL_ERROR();
 
-    glDrawArrays(GL_TRIANGLES, 0, vertex_buffer_data.size());
-    TEST_OPENGL_ERROR();
-    glBindVertexArray(0);
-    TEST_OPENGL_ERROR();
+        glDrawArrays(GL_TRIANGLES, 0,
+                     obj.second.vbo_data_map.at(obj.second.vbo_ids_map.at("position")).size());
+        TEST_OPENGL_ERROR();
+        glBindVertexArray(0);
+        TEST_OPENGL_ERROR();
+    }
 
     glutSwapBuffers();
     TEST_OPENGL_ERROR();
@@ -74,53 +76,10 @@ bool init_GL()
 
 bool init_object(shared_program prog)
 {
-    constexpr int max_nb_vbo = 3;
-    int nb_vbo = 0;
-    GLuint vbo_ids[max_nb_vbo];
-
-    GLint vertex_location = glGetAttribLocation(prog->get_program_id(),"position");TEST_OPENGL_ERROR();
-    GLint normal_flat_location = glGetAttribLocation(prog->get_program_id(),"normalFlat");TEST_OPENGL_ERROR();
-    GLint normal_smooth_location = glGetAttribLocation(prog->get_program_id(),"normalSmooth");TEST_OPENGL_ERROR();
-
-    glGenVertexArrays(1, &teapot_vao_id);
-    TEST_OPENGL_ERROR();
-    glBindVertexArray(teapot_vao_id);
-    TEST_OPENGL_ERROR();
-
-    nb_vbo = vertex_location != -1 ? nb_vbo + 1 : nb_vbo;
-    nb_vbo = normal_flat_location != -1 ? nb_vbo + 1 : nb_vbo;
-    nb_vbo = normal_smooth_location != -1 ? nb_vbo + 1 : nb_vbo;
-    glGenBuffers(nb_vbo, vbo_ids);TEST_OPENGL_ERROR();
-
-    int id_vbo = 0;
-    if (vertex_location != -1)
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_ids[id_vbo++]);TEST_OPENGL_ERROR();
-        glBufferData(GL_ARRAY_BUFFER, vertex_buffer_data.size() * sizeof(float), vertex_buffer_data.data(), GL_STATIC_DRAW);
-        TEST_OPENGL_ERROR();
-        glVertexAttribPointer(vertex_location, 3, GL_FLOAT, GL_FALSE, 0, 0);TEST_OPENGL_ERROR();
-        glEnableVertexAttribArray(vertex_location);TEST_OPENGL_ERROR();
-    }
-    if (normal_flat_location != -1)
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_ids[id_vbo++]);TEST_OPENGL_ERROR();
-        glBufferData(GL_ARRAY_BUFFER, normal_flat_buffer_data.size() * sizeof(float), normal_flat_buffer_data.data(), GL_STATIC_DRAW);
-        TEST_OPENGL_ERROR();
-        glVertexAttribPointer(normal_flat_location, 3, GL_FLOAT, GL_FALSE, 0, 0);TEST_OPENGL_ERROR();
-        glEnableVertexAttribArray(normal_flat_location);TEST_OPENGL_ERROR();
-    }
-    if (normal_smooth_location != -1)
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_ids[id_vbo++]);TEST_OPENGL_ERROR();
-        glBufferData(GL_ARRAY_BUFFER, normal_smooth_buffer_data.size() * sizeof(float), normal_smooth_buffer_data.data(), GL_STATIC_DRAW);
-        TEST_OPENGL_ERROR();
-        glVertexAttribPointer(normal_smooth_location, 3, GL_FLOAT, GL_FALSE, 0, 0);TEST_OPENGL_ERROR();
-        glEnableVertexAttribArray(normal_smooth_location);TEST_OPENGL_ERROR();
-    }
-
-    glBindVertexArray(0);
-    TEST_OPENGL_ERROR();
-
+    prog->add_object("teapot", 3);
+    prog->add_object_vbo("teapot", "position", vertex_buffer_data, 3);
+    prog->add_object_vbo("teapot", "normalFlat", normal_flat_buffer_data, 3);
+    prog->add_object_vbo("teapot", "normalSmooth", normal_smooth_buffer_data, 3);
     return true;
 }
 
@@ -157,10 +116,10 @@ void update(int value)
     glutTimerFunc(1000/60, update, ++value);
 
     float scale = (unsigned int)value / 100.0;
-    scale = scale > 3.0 ? scale - 3.0 : scale;
     float r = scale < 1.0 ? scale : 0.0;
     float g = scale >= 1.0 && scale < 2.0 ? scale - 1.0 : 0.0;
     float b = scale >= 2.0 ? scale - 2.0 : 0.0;
+
     glm::vec3 color_vec(r, g, b);
     GLuint color_location = glGetUniformLocation(prog->get_program_id(), "color");
     TEST_OPENGL_ERROR();
