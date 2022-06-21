@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <iostream>
+#include <memory>
 #include <string>
 
 #define TEST_OPENGL_ERROR()                                                    \
@@ -16,21 +17,26 @@
 class program
 {
 public:
-    program() = default;
-    ~program() = default;
+    program();
+    ~program();
     char *getlog(GLint id, GLenum type);
-    bool isready();
     void use();
-    void set_shader_id(GLuint shd_id, GLenum type);
 
-    GLuint load_shader(std::string &, GLenum type);
+    void set_shader_id(GLuint shd_id, GLenum type);
+    GLuint load_shader(const char *filename, GLenum type);
+    void add_shader(const char *filename, GLenum type);
+
     void link_program();
     inline GLuint get_program_id()
     {
         return program_id_;
     }
+    inline bool isready()
+    {
+        return ready_;
+    }
 
-    static program *make_program(std::string &vertex_shader_src, std::string &fragment_shader);
+    static std::shared_ptr<program> make_program(const char *vertex_shader_src, const char *fragment_shader);
 
 private:
     GLuint program_id_;
@@ -39,3 +45,5 @@ private:
 
     bool ready_ = false;
 };
+
+using shared_program = std::shared_ptr<program>;

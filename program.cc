@@ -1,44 +1,34 @@
 #include "program.hh"
 
-void program::set_shader_id(GLuint shd_id, GLenum type)
-{
-    if (type == GL_VERTEX_SHADER)
-        vertex_shd_id_ = shd_id;
+#undef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200112L
+#include <unistd.h>
+#include <stdlib.h>
+#include <err.h>
+#include <fcntl.h>
 
-    if (type == GL_FRAGMENT_SHADER)
-        fragment_shd_id_ = shd_id;
+#define BUFF_SIZE 4096
+
+program::program() {
+    program_id_ = glCreateProgram();
+    TEST_OPENGL_ERROR();
+    if (program_id_ == 0) {
+        std::cerr << "Error: glCreateProgram() failed" << std::endl;
+        std::exit(-1);
+    }
 }
 
-GLuint program::load_shader(std::string &src, GLenum type)
-{
-    GLint compile_status = GL_TRUE;
-
-    GLuint shader_id = glCreateShader(type);
+program::~program() {
+    glDeleteProgram(program_id_);
     TEST_OPENGL_ERROR();
 
-    glShaderSource(shader_id, 1, (const GLchar **)&(src), 0);
+    glDeleteShader(vertex_shd_id_);
     TEST_OPENGL_ERROR();
 
-    glCompileShader(shader_id);
-    TEST_OPENGL_ERROR();
-    glGetShaderiv(shader_id, GL_COMPILE_STATUS, &compile_status);
+    glDeleteShader(fragment_shd_id_);
     TEST_OPENGL_ERROR();
 
-    if (compile_status != GL_TRUE)
-    {
-        char *log = getlog(shader_id, GL_SHADER);
-        if (log)
-        {
-            auto str = type == GL_VERTEX_SHADER ? " vertex " : "fragment ";
-            std::cerr << "Shader " << str << shader_id << " : " << log << std::endl;
-            std::free(log);
-        }
-
-        glDeleteShader(shader_id);
-        return 0;
-    }
-
-    return shader_id;
+    program_id_ = 0;
 }
 
 char *program::getlog(GLint id, GLenum type)
@@ -52,7 +42,7 @@ char *program::getlog(GLint id, GLenum type)
     else
         return nullptr;
 
-    log = (char *)std::malloc(log_size + 1);
+    log = (char *)malloc(log_size + 1);
     if (log != 0)
     {
         if (type == GL_SHADER)
@@ -65,19 +55,81 @@ char *program::getlog(GLint id, GLenum type)
     return nullptr;
 }
 
+void program::set_shader_id(GLuint shd_id, GLenum type)
+{
+    if (type == GL_VERTEX_SHADER)
+        vertex_shd_id_ = shd_id;
+
+    if (type == GL_FRAGMENT_SHADER)
+        fragment_shd_id_ = shd_id;
+}
+
+static char *load_file(const char *filename)
+{
+    int fd;
+    if ((fd = open(filename, O_RDONLY)) == -1)
+        errx(1, "%s: No such file or directory", filename);
+    posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL | POSIX_FADV_NOREUSE |
+                            POSIX_FADV_WILLNEED);
+
+    char *str = nullptr;
+    ssize_t len_rd = 0;
+    size_t len_file = 0;
+    do
+    {
+        len_file += len_rd;
+        str = (char *)realloc(str, sizeof(char) * (len_file + BUFF_SIZE));
+        str[len_file] = '\0';
+    } while ((len_rd = read(fd, str + len_file, BUFF_SIZE - 1)) > 0);
+    close(fd);
+    str = (char *)realloc(str, sizeof(char) * (len_file + 1));
+
+    return str;
+}
+
+GLuint program::load_shader(const char *filename, GLenum type)
+{
+    GLint compile_status = GL_TRUE;
+
+    GLuint shader_id = glCreateShader(type);
+    TEST_OPENGL_ERROR();
+
+    char *src = load_file(filename);
+    glShaderSource(shader_id, 1, (const GLchar **)&(src), 0);
+    TEST_OPENGL_ERROR();
+    free(src);
+
+    glCompileShader(shader_id);
+    TEST_OPENGL_ERROR();
+    glGetShaderiv(shader_id, GL_COMPILE_STATUS, &compile_status);
+    TEST_OPENGL_ERROR();
+
+    if (compile_status != GL_TRUE)
+    {
+        char *log = getlog(shader_id, GL_SHADER);
+        if (log)
+        {
+            auto str = type == GL_VERTEX_SHADER ? "vertex " : "fragment ";
+            errx(-1, "Shader %s %u : %s\n", str, shader_id, log);
+        }
+    }
+
+    return shader_id;
+}
+
+void program::add_shader(const char *filename, GLenum type) {
+    GLuint shader_id = load_shader(filename, type);
+    if (shader_id == 0)
+        return;
+    set_shader_id(shader_id, type);
+
+    glAttachShader(program_id_, shader_id);
+    TEST_OPENGL_ERROR();
+}
+
 void program::link_program()
 {
     GLint link_status = GL_TRUE;
-    program_id_ = glCreateProgram();
-    TEST_OPENGL_ERROR();
-    if (program_id_ == 0)
-        return;
-
-    glAttachShader(program_id_, vertex_shd_id_);
-    TEST_OPENGL_ERROR();
-
-    glAttachShader(program_id_, fragment_shd_id_);
-    TEST_OPENGL_ERROR();
 
     glLinkProgram(program_id_);
     TEST_OPENGL_ERROR();
@@ -87,44 +139,18 @@ void program::link_program()
     {
         char *program_log = getlog(program_id_, GL_PROGRAM);
         if (program_log)
-        {
-            std::cerr << "Program " << program_log << std::endl;
-            std::free(program_log);
-        }
-
-        glDeleteProgram(program_id_);
-        TEST_OPENGL_ERROR();
-
-        glDeleteShader(vertex_shd_id_);
-        TEST_OPENGL_ERROR();
-
-        glDeleteShader(fragment_shd_id_);
-        TEST_OPENGL_ERROR();
-
-        program_id_ = 0;
-
-        return;
+            errx(-1, "Program %s\n", program_log);
     }
 
     ready_ = true;
 }
 
-program *program::make_program(std::string &vertex_shader_src, std::string &fragment_shader)
+std::shared_ptr<program> program::make_program(const char *vertex_shader_src, const char *fragment_shader_src)
 {
-    program *prog = new program();
+    shared_program prog = std::make_shared<program>();
 
-    auto vertex_id = prog->load_shader(vertex_shader_src, GL_VERTEX_SHADER);
-    if (!vertex_id)
-        return nullptr;
-    prog->set_shader_id(vertex_id, GL_VERTEX_SHADER);
-
-    auto fragment_id = prog->load_shader(fragment_shader, GL_FRAGMENT_SHADER);
-    if (!fragment_id)
-    {
-        glDeleteShader(vertex_id);
-        return nullptr;
-    }
-    prog->set_shader_id(fragment_id, GL_FRAGMENT_SHADER);
+    prog->add_shader(vertex_shader_src, GL_VERTEX_SHADER);
+    prog->add_shader(fragment_shader_src, GL_FRAGMENT_SHADER);
 
     prog->link_program();
     return prog;
@@ -132,19 +158,9 @@ program *program::make_program(std::string &vertex_shader_src, std::string &frag
 
 void program::use()
 {
-    if (isready())
-    {
+    if (isready()) {
         glUseProgram(program_id_);
         TEST_OPENGL_ERROR();
-    }
-    else
-    {
-        std::cerr << "Problem of init of program" << std::endl;
-        TEST_OPENGL_ERROR();
-    }
-}
-
-bool program::isready()
-{
-    return ready_;
+    } else
+        errx(-1, "Program is not ready");
 }

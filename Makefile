@@ -14,7 +14,7 @@ HXX_FILES = matrix.hh program.hh object_vbo.hh
 HXX_FILES +=
 OBJ_FILES = $(CPP_FILES:.cc=.o)
 
-CXX_FLAGS += -Wall -Wextra -O3 -std=c++17
+CXX_FLAGS += -Wall -Wextra -Werror -pedantic -O3 -std=c++17
 CXX_FLAGS +=
 CXX_FLAGS += -m64 -march=native
 CXX_FLAGS += -fopt-info-vec-optimized #-fopt-info-vec-missed -ftree-vectorize
