@@ -16,10 +16,7 @@ struct objRaw
 };
 
 
-objRaw getVectorFromMesh(objl::Mesh mesh) {
-
-    std::cout << mesh.MeshName << std::endl;
-    objRaw obj;
+void getVectorFromMesh(objl::Mesh mesh, objRaw obj) {
 
     for (int i = 0; i < mesh.Vertices.size(); ++i) {
         obj.positionVect.push_back(mesh.Vertices[i].Position.X);
@@ -30,41 +27,41 @@ objRaw getVectorFromMesh(objl::Mesh mesh) {
         obj.normalVect.push_back(mesh.Vertices[i].Normal.Y);
         obj.normalVect.push_back(mesh.Vertices[i].Normal.Z);
     }
-    return obj;
 }
 
-int main() {
+void getMaterialFromMesh(objl::Mesh material, objRaw obj) {
+
+    obj.kaVect.push_back(material.MeshMaterial.Ka.X);
+    obj.kaVect.push_back(material.MeshMaterial.Ka.Y);
+    obj.kaVect.push_back(material.MeshMaterial.Ka.Z);
+
+    obj.ksVect.push_back(material.MeshMaterial.Ks.X);
+    obj.ksVect.push_back(material.MeshMaterial.Ks.Y);
+    obj.ksVect.push_back(material.MeshMaterial.Ks.Z);
+
+    obj.kdVect.push_back(material.MeshMaterial.Kd.X);
+    obj.kdVect.push_back(material.MeshMaterial.Kd.Y);
+    obj.kdVect.push_back(material.MeshMaterial.Kd.Z);
+
+    obj.nsVect.push_back(material.MeshMaterial.Ns);
+   
+}
+
+void addObjs(const std::string filename) {
     objl::Loader loader;
-    loader.LoadFile("Erlaufsee.obj");
+    loader.LoadFile(filename);
 
     std::vector<objl::Mesh> meshObjects = loader.LoadedMeshes;
-    std::vector<objl::Material> materialObjects = loader.LoadedMaterials;
 
     objRaw obj;
 
-    // MeshObjects
+    // Mesh
     for (int i = 0; i < meshObjects.size(); i++)
     {
-        obj = getVectorFromMesh(meshObjects[i]);
+        getVectorFromMesh(meshObjects[i], obj);
+        getMaterialFromMesh(meshObjects[i], obj);
     }
 
-   // MaterialObjects
-   for (int i = 0; i < materialObjects.size(); i++)
-   {
-       obj.kaVect.push_back(materialObjects[i].Ka.X);
-       obj.kaVect.push_back(materialObjects[i].Ka.Y);
-       obj.kaVect.push_back(materialObjects[i].Ka.Z);
-
-       obj.ksVect.push_back(materialObjects[i].Ks.X);
-       obj.ksVect.push_back(materialObjects[i].Ks.Y);
-       obj.ksVect.push_back(materialObjects[i].Ks.Z);
-
-       obj.kdVect.push_back(materialObjects[i].Kd.X);
-       obj.kdVect.push_back(materialObjects[i].Kd.Y);
-       obj.kdVect.push_back(materialObjects[i].Kd.Z);
-
-       obj.nsVect.push_back(materialObjects[i].Ns);
-   }
+   // Material
    
-    return 0;
 }
