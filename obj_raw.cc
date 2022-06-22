@@ -1,20 +1,4 @@
-#include "obj_loader.hh"
-
-#include <GL/glew.h>
-#include <stdio.h>
-#include <vector>
-
-struct objRaw
-{
-    std::vector<GLfloat> positionVect;
-    std::vector<GLfloat> normalVect;
-
-    std::vector<GLfloat> kaVect;
-    std::vector<GLfloat> kdVect;
-    std::vector<GLfloat> ksVect;
-    std::vector<GLfloat> nsVect;
-};
-
+#include "obj_raw.hh"
 
 void getVectorFromMesh(objl::Mesh mesh, objRaw obj) {
 
@@ -47,21 +31,20 @@ void getMaterialFromMesh(objl::Mesh material, objRaw obj) {
    
 }
 
-void addObjs(const std::string filename) {
+std::vector<objRaw> addObjs(const std::string filename) {
     objl::Loader loader;
     loader.LoadFile(filename);
 
     std::vector<objl::Mesh> meshObjects = loader.LoadedMeshes;
+    std::vector<objRaw> objs;
 
-    objRaw obj;
-
-    // Mesh
-    for (int i = 0; i < meshObjects.size(); i++)
+    for (const auto &mesh : meshObjects)
     {
-        getVectorFromMesh(meshObjects[i], obj);
-        getMaterialFromMesh(meshObjects[i], obj);
+        objRaw obj;
+        getVectorFromMesh(mesh, obj);
+        getMaterialFromMesh(mesh, obj);
+        objs.push_back(obj);
     }
 
-   // Material
-   
+    return objs;
 }

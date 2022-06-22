@@ -1,4 +1,5 @@
-#pragma once
+#ifndef OBJECT_HEADER
+#define OBJECT_HEADER
 
 #include <GL/glew.h>
 #include <GL/freeglut.h>
@@ -44,3 +45,4 @@ private:
     std::vector<GLuint> vbo_ids;
 };
 
+#endif

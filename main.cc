@@ -2,10 +2,12 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/vec3.hpp>
 #include <iostream>
+#include <err.h>
 
 #include "matrix.hh"
 #include "object_vbo.hh"
 #include "program.hh"
+#include "obj_raw.hh"
 
 GLuint teapot_vao_id;
 
@@ -74,8 +76,9 @@ bool init_GL()
     return true;
 }
 
-bool init_object(shared_program prog)
+bool init_object(shared_program prog, const std::string filename)
 {
+    const auto obj = addObjs(filename);
     prog->add_object("teapot", 3);
     prog->add_object_vbo("teapot", "position", vertex_buffer_data, 3);
     prog->add_object_vbo("teapot", "normalFlat", normal_flat_buffer_data, 3);
@@ -131,6 +134,11 @@ void update(int value)
 
 int main(int argc, char *argv[])
 {
+    if (argc != 2)
+    {
+        errx(1, "Usage : %s [filename]", argv[0]);
+    }
+    
     if (!init_glut(argc, argv))
     {
         TEST_OPENGL_ERROR();
@@ -152,7 +160,7 @@ int main(int argc, char *argv[])
     prog = program::make_program("shaders/vertex.vert", "shaders/fragment.frag");
     prog->use();
 
-    if (!init_object(prog))
+    if (!init_object(prog, argv[1]))
     {
         TEST_OPENGL_ERROR();
         std::exit(-1);

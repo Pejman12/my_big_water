@@ -8,13 +8,13 @@
 
 CC = g++
 
-CPP_FILES = matrix.cc program.cc object.cc
+CPP_FILES = matrix.cc program.cc object.cc obj_raw.cc obj_loader.cc
 CPP_FILES +=
-HXX_FILES = matrix.hh program.hh object.hh object_vbo.hh
+HXX_FILES = matrix.hh program.hh object.hh object_vbo.hh 
 HXX_FILES +=
 OBJ_FILES = $(CPP_FILES:.cc=.o)
 
-CXX_FLAGS += -Wall -Wextra -Werror -pedantic -O3 -std=c++17
+CXX_FLAGS += -Wall -Wextra -pedantic -O3 -std=c++17
 CXX_FLAGS +=
 CXX_FLAGS += -m64 -march=native
 CXX_FLAGS += -fopt-info-vec-optimized #-fopt-info-vec-missed -ftree-vectorize
