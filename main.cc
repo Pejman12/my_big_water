@@ -78,7 +78,15 @@ bool init_GL()
 
 bool init_object(shared_program prog, const std::string filename)
 {
-    const auto obj = addObjs(filename);
+    const auto objs = addObjs(filename);
+    for (const auto &obj : objs)
+    {
+        prog->add_object(obj.name, 6);
+        for (int i = 0; i < 6; ++i)
+        {
+            prog->add_object_vbo(obj.name, obj.vbos_names[i], );
+        }
+    }
     prog->add_object("teapot", 3);
     prog->add_object_vbo("teapot", "position", vertex_buffer_data, 3);
     prog->add_object_vbo("teapot", "normalFlat", normal_flat_buffer_data, 3);
