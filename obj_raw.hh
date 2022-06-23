@@ -4,22 +4,30 @@
 #include "obj_loader.hh"
 
 #include <GL/glew.h>
-#include <stdio.h>
 #include <vector>
+#include <map>
 
-struct objRaw
-{
-    std::vector<GLfloat> positionVect;
-    std::vector<GLfloat> normalVect;
+namespace obj_raw {
+    struct objRaw {
+        std::string name;
+        std::map<std::string, std::vector<GLfloat>> vecs;
 
-    std::vector<GLfloat> kaVect;
-    std::vector<GLfloat> kdVect;
-    std::vector<GLfloat> ksVect;
-    std::vector<GLfloat> nsVect;
-};
+        bool operator==(const objRaw &other) const {
+            return name == other.name;
+        }
 
-void getVectorFromMesh(objl::Mesh mesh, objRaw obj);
-void getMaterialFromMesh(objl::Mesh material, objRaw obj);
-std::vector<objRaw> addObjs(const std::string filename);
+        bool operator<(const objRaw &other) const {
+            return name < other.name;
+        }
+    };
+
+    using matToMeshsMap = std::map<objRaw, std::vector<objRaw>>;
+
+    objRaw makeObjRawFromMesh(const objl::Mesh &mesh);
+
+    objRaw makeObjRawFromMat(const objl::Material &mat);
+
+    matToMeshsMap getMap(const std::string &filename);
+}
 
 #endif

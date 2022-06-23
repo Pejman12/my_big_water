@@ -30,10 +30,10 @@ namespace mygl
             return res;
         }
 
-        void frustum(const float &left, const float &right, const float &bottom,
+        static matrix4 frustum(const float &left, const float &right, const float &bottom,
                      const float &top, const float &znear, const float &far);
 
-        void lookat(const float &eyeX, const float &eyeY, const float &eyeZ,
+        static matrix4 lookat(const float &eyeX, const float &eyeY, const float &eyeZ,
                     const float &centerX, const float &centerY,
                     const float &centerZ, float upX, float upY, float upZ);
 

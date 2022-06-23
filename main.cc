@@ -9,9 +9,7 @@
 #include "program.hh"
 #include "obj_raw.hh"
 
-GLuint teapot_vao_id;
-
-shared_program prog = nullptr;
+std::map<std::string, shared_program> progMap;
 
 void window_resize(int width, int height) {
     glViewport(0,0,width,height);TEST_OPENGL_ERROR();
@@ -19,24 +17,26 @@ void window_resize(int width, int height) {
 
 void display()
 {
-    for (auto &obj : prog->get_objects()) {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        TEST_OPENGL_ERROR();
-        glBindVertexArray(obj.second.get_vao_id());
-        TEST_OPENGL_ERROR();
+    for (auto &[name, prog]: progMap) {
+        for (auto &[objName, obj]: prog->get_objects()) {
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            TEST_OPENGL_ERROR();
+            glBindVertexArray(obj.get_vao_id());
+            TEST_OPENGL_ERROR();
 
-        glDrawArrays(GL_TRIANGLES, 0,
-                     obj.second.vbo_data_map.at(obj.second.vbo_ids_map.at("position")).size());
-        TEST_OPENGL_ERROR();
-        glBindVertexArray(0);
-        TEST_OPENGL_ERROR();
+            glDrawArrays(GL_TRIANGLES, 0,
+                         obj.vbo_data_map.at(obj.vbo_ids_map.at("position")).size());
+            TEST_OPENGL_ERROR();
+            glBindVertexArray(0);
+            TEST_OPENGL_ERROR();
+        }
     }
 
     glutSwapBuffers();
     TEST_OPENGL_ERROR();
 }
 
-bool init_glut(int &argc, char *argv[])
+void init_glut(int &argc, char *argv[])
 {
     glutInit(&argc, argv);
     glutInitContextVersion(4, 5);
@@ -47,8 +47,6 @@ bool init_glut(int &argc, char *argv[])
     glutCreateWindow("MY BIG WATER");
     glutDisplayFunc(display);
     glutReshapeFunc(window_resize);
-
-    return true;
 }
 
 bool init_glew()
@@ -56,7 +54,7 @@ bool init_glew()
     return (glewInit() == GLEW_OK);
 }
 
-bool init_GL()
+void init_GL()
 {
     glEnable(GL_DEPTH_TEST);
     TEST_OPENGL_ERROR();
@@ -67,50 +65,69 @@ bool init_GL()
     glEnable(GL_CULL_FACE);
     TEST_OPENGL_ERROR();
 
-    glClearColor(0.25,0.25,0.25,1.0);
+    glClearColor(0.15,0.15,0.15,1.0);
     TEST_OPENGL_ERROR();
 
     glPixelStorei(GL_UNPACK_ALIGNMENT,1);
     glPixelStorei(GL_PACK_ALIGNMENT,1);
-
-    return true;
+    TEST_OPENGL_ERROR();
 }
 
-bool init_object(shared_program prog, const std::string filename)
+void initObjects(shared_program prog, const std::vector<obj_raw::objRaw> &vaos)
 {
-    const auto obj = addObjs(filename);
-    prog->add_object("teapot", 3);
-    prog->add_object_vbo("teapot", "position", vertex_buffer_data, 3);
-    prog->add_object_vbo("teapot", "normalFlat", normal_flat_buffer_data, 3);
-    prog->add_object_vbo("teapot", "normalSmooth", normal_smooth_buffer_data, 3);
-    return true;
+    for (const auto &vao : vaos)
+    {
+        prog->add_object(vao.name, 2);
+        prog->add_object_vbo(vao.name, "position", vao.vecs.at("position"), 3);
+        prog->add_object_vbo(vao.name, "normal", vao.vecs.at("normal"), 3);
+    }
 }
 
-bool init_POV(shared_program prog)
+void initUniforms(shared_program prog, const obj_raw::objRaw &material)
 {
-    mygl::matrix4 mat = mygl::matrix4(
-        0.57735, -0.33333, 0.57735, 0.00000, 0.00000, 0.66667, 0.57735, 0.00000,
-        -0.57735, -0.33333, 0.57735, 0.00000, 0.00000, 0.00000, -17, 1.00000);
-
-    GLuint model_view_matrix =
+    //mygl::matrix4 mat = mygl::matrix4(
+    //    0.57735, -0.33333, 0.57735, 0.00000, 0.00000, 0.66667, 0.57735, 0.00000,
+    //    -0.57735, -0.33333, 0.57735, 0.00000, 0.00000, 0.00000, -17, 1.00000);
+    const auto &mat = mygl::matrix4::lookat(68.0f, 0.0f, 32.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+    GLint model_view_matrix =
         glGetUniformLocation(prog->get_program_id(), "model_view_matrix");
     TEST_OPENGL_ERROR();
+    if (model_view_matrix == -1)
+        errx(1, "Could not find uniform model_view_matrix");
+
     glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(mat.mat));
     TEST_OPENGL_ERROR();
 
-    mygl::matrix4 mat_2 =
-        mygl::matrix4(5.00000, 0.00000, 0.00000, 0.00000, 0.00000, 5.00000,
-                      0.00000, 0.00000, 0.00000, 0.00000, -1.00020, -1.00000,
-                      0.00000, 0.00000, -10.00100, 0.00000);
-
-    GLuint projection_matrix =
+    //mygl::matrix4 mat_2 =
+    //    mygl::matrix4(5.00000, 0.00000, 0.00000, 0.00000, 0.00000, 5.00000,
+    //                  0.00000, 0.00000, 0.00000, 0.00000, -1.00020, -1.00000,
+    //                  0.00000, 0.00000, -10.00100, 0.00000);
+    const auto &mat_2 = mygl::matrix4::frustum(-1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 300.0f);
+    GLint projection_matrix =
         glGetUniformLocation(prog->get_program_id(), "projection_matrix");
     TEST_OPENGL_ERROR();
+    if (projection_matrix == -1)
+        errx(1, "Could not find uniform projection_matrix");
+
     glUniformMatrix4fv(projection_matrix, 1, GL_FALSE,
                        glm::value_ptr(mat_2.mat));
     TEST_OPENGL_ERROR();
 
-    return true;
+    for (const auto &[name, vec] : material.vecs) {
+        GLint uniform_location =
+            glGetUniformLocation(prog->get_program_id(), name.c_str());
+        TEST_OPENGL_ERROR();
+        if (uniform_location == -1)
+            warnx("Could not find uniform %s", name.c_str());
+
+        if (name != "Ns") {
+            glUniform3fv(uniform_location, 1, vec.data());
+            TEST_OPENGL_ERROR();
+        } else {
+            glUniform1f(uniform_location, vec[0]);
+            TEST_OPENGL_ERROR();
+        }
+    }
 }
 
 void update(int value)
@@ -124,7 +141,7 @@ void update(int value)
     float b = scale >= 2.0 ? scale - 2.0 : 0.0;
 
     glm::vec3 color_vec(r, g, b);
-    GLuint color_location = glGetUniformLocation(prog->get_program_id(), "color");
+    GLuint color_location = glGetUniformLocation(progMap.begin()->second->get_program_id(), "color");
     TEST_OPENGL_ERROR();
     glUniform3fv(color_location, 1, glm::value_ptr(color_vec));
     TEST_OPENGL_ERROR();
@@ -135,43 +152,23 @@ void update(int value)
 int main(int argc, char *argv[])
 {
     if (argc != 2)
-    {
         errx(1, "Usage : %s [filename]", argv[0]);
-    }
-    
-    if (!init_glut(argc, argv))
-    {
-        TEST_OPENGL_ERROR();
-        std::exit(-1);
-    }
+
+    init_glut(argc, argv);
 
     if (!init_glew())
-    {
-        TEST_OPENGL_ERROR();
-        std::exit(-1);
+        errx(1, "Could not initialize glew");
+
+    init_GL();
+
+    const auto &matMap = obj_raw::getMap(argv[1]);
+
+    for (const auto &[mat, meshes] : matMap) {
+        progMap[mat.name] = program::make_program("shaders/vertex.vert", "shaders/fragment.frag");
+        progMap[mat.name]->use();
+        initUniforms(progMap[mat.name], mat);
+        initObjects(progMap[mat.name], meshes);
     }
-
-    if (!init_GL())
-    {
-        TEST_OPENGL_ERROR();
-        std::exit(-1);
-    }
-
-    prog = program::make_program("shaders/vertex.vert", "shaders/fragment.frag");
-    prog->use();
-
-    if (!init_object(prog, argv[1]))
-    {
-        TEST_OPENGL_ERROR();
-        std::exit(-1);
-    }
-
-    if (!init_POV(prog))
-    {
-        TEST_OPENGL_ERROR();
-        std::exit(-1);
-    }
-
     glutTimerFunc(1000/60, update, 0);
     glutMainLoop();
 

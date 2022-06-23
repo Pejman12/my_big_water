@@ -31,8 +31,6 @@ void object::add_vbo(const std::string &name, const std::vector<float> &data, GL
     glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), data.data(), GL_STATIC_DRAW);
     TEST_OPENGL_ERROR();
 
-    std::cout << "vbo_loc : " << vbo_loc << std::endl;
-
     glVertexAttribPointer(vbo_loc, unit_size, GL_FLOAT, GL_FALSE, 0, 0);
     TEST_OPENGL_ERROR();
 
