@@ -9,7 +9,20 @@
 #include "program.hh"
 #include "obj_raw.hh"
 
+#define SCR_WIDTH 800
+#define SCR_HEIGHT 600
+
 std::map<std::string, shared_program> progMap;
+
+glm::vec3 cam_pos = glm::vec3(68.0f, 30.0f, 68.0f);
+glm::vec3 cam_target = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 cam_dir = glm::normalize(cam_target - cam_pos);
+glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+glm::vec3 cam_right = glm::normalize(glm::cross(cam_dir, up));
+glm::vec3 cam_up = glm::normalize(glm::cross(cam_right, cam_dir));
+
+float lastX = SCR_WIDTH / 2.0f;
+float lastY = SCR_HEIGHT / 2.0f;
 
 void window_resize(int width, int height) {
     glViewport(0,0,width,height);TEST_OPENGL_ERROR();
@@ -36,17 +49,78 @@ void display()
     TEST_OPENGL_ERROR();
 }
 
+void processSpecialKeys(int key, int x, int y) {
+
+    switch(key) {
+    case GLUT_KEY_UP:
+        cam_pos += cam_dir * 0.1f;
+        break;
+    case GLUT_KEY_DOWN:
+        cam_pos -= cam_dir * 0.1f;
+        break;
+    case GLUT_KEY_LEFT:
+        cam_pos -= cam_right * 0.1f;
+        break;
+    case GLUT_KEY_RIGHT:
+        cam_pos += cam_right * 0.1f;
+        break;
+    }
+
+    for (const auto &[name, prog]: progMap) {
+        glm::mat4 view = glm::lookAt(cam_pos, cam_pos + cam_dir, cam_up);
+        GLint model_view_matrix =
+                glGetUniformLocation(prog->get_program_id(), "model_view_matrix");
+        TEST_OPENGL_ERROR();
+        if (model_view_matrix == -1)
+            errx(1, "Could not find uniform model_view_matrix");
+
+        glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(view));
+        TEST_OPENGL_ERROR();
+    }
+}
+
+void processMotion(int x, int y) {
+    float dx = x - lastX;
+    float dy = y - lastY;
+    lastX = x;
+    lastY = y;
+
+    const float sensitivity = 0.1f;
+    float angle = glm::radians(dx * sensitivity);
+    float height = glm::radians(dy * sensitivity);
+
+    cam_dir = glm::normalize(glm::vec3(glm::cos(angle) * glm::cos(height),
+                                       glm::sin(height),
+                                        glm::sin(angle) * glm::cos(height)));
+    cam_right = glm::normalize(glm::cross(cam_dir, up));
+    cam_up = glm::normalize(glm::cross(cam_right, cam_dir));
+
+    for (const auto &[name, prog]: progMap) {
+        glm::mat4 view = glm::lookAt(cam_pos, cam_pos + cam_dir, cam_up);
+        GLint model_view_matrix =
+                glGetUniformLocation(prog->get_program_id(), "model_view_matrix");
+        TEST_OPENGL_ERROR();
+        if (model_view_matrix == -1)
+            errx(1, "Could not find uniform model_view_matrix");
+
+        glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(view));
+        TEST_OPENGL_ERROR();
+    }
+}
+
 void init_glut(int &argc, char *argv[])
 {
     glutInit(&argc, argv);
     glutInitContextVersion(4, 5);
     glutInitContextProfile(GLUT_CORE_PROFILE);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
-    glutInitWindowSize(512, 512);
+    glutInitWindowSize(SCR_WIDTH, SCR_HEIGHT);
     glutInitWindowPosition(10, 10);
     glutCreateWindow("MY BIG WATER");
     glutDisplayFunc(display);
     glutReshapeFunc(window_resize);
+    glutSpecialFunc(processSpecialKeys);
+    glutMotionFunc(processMotion);
 }
 
 bool init_glew()
@@ -85,24 +159,18 @@ void initObjects(shared_program prog, const std::vector<obj_raw::objRaw> &vaos)
 
 void initUniforms(shared_program prog, const obj_raw::objRaw &material)
 {
-    //mygl::matrix4 mat = mygl::matrix4(
-    //    0.57735, -0.33333, 0.57735, 0.00000, 0.00000, 0.66667, 0.57735, 0.00000,
-    //    -0.57735, -0.33333, 0.57735, 0.00000, 0.00000, 0.00000, -17, 1.00000);
-    const auto &mat = mygl::matrix4::lookat(68.0f, 0.0f, 32.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+    // init camera
+    glm::mat4 view = glm::lookAt(cam_pos, cam_pos + cam_dir, cam_up);
     GLint model_view_matrix =
         glGetUniformLocation(prog->get_program_id(), "model_view_matrix");
     TEST_OPENGL_ERROR();
     if (model_view_matrix == -1)
         errx(1, "Could not find uniform model_view_matrix");
 
-    glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(mat.mat));
+    glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(view));
     TEST_OPENGL_ERROR();
 
-    //mygl::matrix4 mat_2 =
-    //    mygl::matrix4(5.00000, 0.00000, 0.00000, 0.00000, 0.00000, 5.00000,
-    //                  0.00000, 0.00000, 0.00000, 0.00000, -1.00020, -1.00000,
-    //                  0.00000, 0.00000, -10.00100, 0.00000);
-    const auto &mat_2 = mygl::matrix4::frustum(-1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 300.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(30.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
     GLint projection_matrix =
         glGetUniformLocation(prog->get_program_id(), "projection_matrix");
     TEST_OPENGL_ERROR();
@@ -110,7 +178,7 @@ void initUniforms(shared_program prog, const obj_raw::objRaw &material)
         errx(1, "Could not find uniform projection_matrix");
 
     glUniformMatrix4fv(projection_matrix, 1, GL_FALSE,
-                       glm::value_ptr(mat_2.mat));
+                       glm::value_ptr(projection));
     TEST_OPENGL_ERROR();
 
     for (const auto &[name, vec] : material.vecs) {
@@ -135,16 +203,19 @@ void update(int value)
     value = value % 300;
     glutTimerFunc(1000/60, update, ++value);
 
+/*
     float scale = (unsigned int)value / 100.0;
     float r = scale < 1.0 ? scale : 0.0;
     float g = scale >= 1.0 && scale < 2.0 ? scale - 1.0 : 0.0;
     float b = scale >= 2.0 ? scale - 2.0 : 0.0;
 
+    progMap.begin()->second->use();
     glm::vec3 color_vec(r, g, b);
-    GLuint color_location = glGetUniformLocation(progMap.begin()->second->get_program_id(), "color");
+    GLuint color_location = glGetUniformLocation(progMap.begin()->second->get_program_id(), "Kd");
     TEST_OPENGL_ERROR();
     glUniform3fv(color_location, 1, glm::value_ptr(color_vec));
     TEST_OPENGL_ERROR();
+*/
 
     glutPostRedisplay();
 }
