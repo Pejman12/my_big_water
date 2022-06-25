@@ -8,18 +8,21 @@
 #include "object_vbo.hh"
 #include "program.hh"
 #include "obj_raw.hh"
+#include "camera.hh"
 
 #define SCR_WIDTH 800
 #define SCR_HEIGHT 600
 
 std::map<std::string, shared_program> progMap;
 
-glm::vec3 cam_pos = glm::vec3(68.0f, 30.0f, 68.0f);
+glm::vec3 cam_pos = glm::vec3(10.0f, 10.0f, 10.0f);
 glm::vec3 cam_target = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 cam_dir = glm::normalize(cam_target - cam_pos);
 glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 cam_right = glm::normalize(glm::cross(cam_dir, up));
 glm::vec3 cam_up = glm::normalize(glm::cross(cam_right, cam_dir));
+
+Camera camera(cam_pos, cam_up, -120.0f, -30.0f); //TODO: Revoir alphaY, alphaX
 
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
@@ -51,30 +54,16 @@ void display()
 
 void processSpecialKeys(int key, int x, int y) {
 
-    switch(key) {
-    case GLUT_KEY_UP:
-        cam_pos += cam_dir * 0.1f;
-        break;
-    case GLUT_KEY_DOWN:
-        cam_pos -= cam_dir * 0.1f;
-        break;
-    case GLUT_KEY_LEFT:
-        cam_pos -= cam_right * 0.1f;
-        break;
-    case GLUT_KEY_RIGHT:
-        cam_pos += cam_right * 0.1f;
-        break;
-    }
+    camera.ProcessKeyboard(key, 0.1f);
 
     for (const auto &[name, prog]: progMap) {
-        glm::mat4 view = glm::lookAt(cam_pos, cam_pos + cam_dir, cam_up);
         GLint model_view_matrix =
                 glGetUniformLocation(prog->get_program_id(), "model_view_matrix");
         TEST_OPENGL_ERROR();
         if (model_view_matrix == -1)
             errx(1, "Could not find uniform model_view_matrix");
 
-        glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
         TEST_OPENGL_ERROR();
     }
 }
@@ -160,14 +149,13 @@ void initObjects(shared_program prog, const std::vector<obj_raw::objRaw> &vaos)
 void initUniforms(shared_program prog, const obj_raw::objRaw &material)
 {
     // init camera
-    glm::mat4 view = glm::lookAt(cam_pos, cam_pos + cam_dir, cam_up);
     GLint model_view_matrix =
         glGetUniformLocation(prog->get_program_id(), "model_view_matrix");
     TEST_OPENGL_ERROR();
     if (model_view_matrix == -1)
         errx(1, "Could not find uniform model_view_matrix");
 
-    glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
     TEST_OPENGL_ERROR();
 
     glm::mat4 projection = glm::perspective(glm::radians(30.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);

@@ -8,7 +8,7 @@
 
 CC = g++
 
-CPP_FILES = matrix.cc program.cc object.cc obj_raw.cc obj_loader.cc
+CPP_FILES = matrix.cc program.cc object.cc obj_raw.cc obj_loader.cc camera.cc
 CPP_FILES +=
 HXX_FILES = matrix.hh program.hh object.hh object_vbo.hh 
 HXX_FILES +=
