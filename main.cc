@@ -15,17 +15,20 @@
 
 std::map<std::string, shared_program> progMap;
 
-glm::vec3 cam_pos = glm::vec3(10.0f, 10.0f, 10.0f);
+glm::vec3 cam_pos = glm::vec3(10.0f, 0.0f, 10.0f);
 glm::vec3 cam_target = glm::vec3(0.0f, 0.0f, 0.0f);
 glm::vec3 cam_dir = glm::normalize(cam_target - cam_pos);
 glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 glm::vec3 cam_right = glm::normalize(glm::cross(cam_dir, up));
 glm::vec3 cam_up = glm::normalize(glm::cross(cam_right, cam_dir));
 
-Camera camera(cam_pos, cam_up, -120.0f, -30.0f); //TODO: Revoir alphaY, alphaX
+Camera camera(cam_pos, cam_up, 225.0f, 0.0f, SPEED, SENSITIVITY, ZOOM); //TODO: Revoir alphaY, alphaX
 
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
+
+#define MAX_DX 5.0f
+#define MAX_DY 5.0f
 
 void window_resize(int width, int height) {
     glViewport(0,0,width,height);TEST_OPENGL_ERROR();
@@ -54,7 +57,7 @@ void display()
 
 void processSpecialKeys(int key, int x, int y) {
 
-    camera.ProcessKeyboard(key, 0.1f);
+    camera.ProcessKeyboard(key);
 
     for (const auto &[name, prog]: progMap) {
         GLint model_view_matrix =
@@ -74,25 +77,19 @@ void processMotion(int x, int y) {
     lastX = x;
     lastY = y;
 
-    const float sensitivity = 0.1f;
-    float angle = glm::radians(dx * sensitivity);
-    float height = glm::radians(dy * sensitivity);
+    if (abs(dx) > MAX_DX || abs(dy) > MAX_DY)
+        return;
 
-    cam_dir = glm::normalize(glm::vec3(glm::cos(angle) * glm::cos(height),
-                                       glm::sin(height),
-                                        glm::sin(angle) * glm::cos(height)));
-    cam_right = glm::normalize(glm::cross(cam_dir, up));
-    cam_up = glm::normalize(glm::cross(cam_right, cam_dir));
+    camera.ProcessMouseMovement(dx, dy, false);
 
     for (const auto &[name, prog]: progMap) {
-        glm::mat4 view = glm::lookAt(cam_pos, cam_pos + cam_dir, cam_up);
         GLint model_view_matrix =
                 glGetUniformLocation(prog->get_program_id(), "model_view_matrix");
         TEST_OPENGL_ERROR();
         if (model_view_matrix == -1)
             errx(1, "Could not find uniform model_view_matrix");
 
-        glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
         TEST_OPENGL_ERROR();
     }
 }
@@ -158,7 +155,7 @@ void initUniforms(shared_program prog, const obj_raw::objRaw &material)
     glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
     TEST_OPENGL_ERROR();
 
-    glm::mat4 projection = glm::perspective(glm::radians(30.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(30.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 400.0f);
     GLint projection_matrix =
         glGetUniformLocation(prog->get_program_id(), "projection_matrix");
     TEST_OPENGL_ERROR();

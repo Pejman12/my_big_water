@@ -2,11 +2,15 @@
 
 
 // constructor with vectors
-Camera::Camera(glm::vec3 position_ = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up_ = glm::vec3(0.0f, 1.0f, 0.0f), float yaw_ = ALPHAY, float pitch_ = ALPHAX) {
+Camera::Camera(glm::vec3 position_ = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up_ = glm::vec3(0.0f, 1.0f, 0.0f),
+                float yaw_ = ALPHAY, float pitch_ = ALPHAX, float movementSpeed_ = SPEED, float mouseSensitivity_ = SENSITIVITY, float zoom_ = ZOOM) {
     this->pos = position_;
-    this->up = up_;
+    this->world_up = up_;
     this->alphaY = yaw_;
     this->alphaX = pitch_;
+    this->movementSpeed = movementSpeed_;
+    this->mouseSensitivity = mouseSensitivity_;
+    this->zoom = zoom_;
     updateCameraVectors();
 }
 
@@ -25,16 +29,15 @@ glm::mat4 Camera::GetViewMatrix(){
 }
 
 // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
-void Camera::ProcessKeyboard(int direction, float deltaTime) {
-    float velocity = this->movementSpeed * deltaTime;
+void Camera::ProcessKeyboard(int direction) {
     if (direction == GLUT_KEY_UP)
-        this->pos += this->front * velocity;
+        this->pos += this->front * this->movementSpeed;
     if (direction == GLUT_KEY_DOWN)
-        this->pos -= this->front * velocity;
+        this->pos -= this->front * this->movementSpeed;
     if (direction == GLUT_KEY_LEFT)
-        this->pos -= this->right * velocity;
+        this->pos -= this->right * this->movementSpeed;
     if (direction == GLUT_KEY_RIGHT)
-        this->pos += this->right * velocity;
+        this->pos += this->right * this->movementSpeed;
 }
 
 // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
@@ -70,11 +73,11 @@ void Camera::ProcessMouseScroll(float yoffset) {
 // calculates the front vector from the Camera's (updated) Euler Angles
 void Camera::updateCameraVectors() {
     // calculate the new Front vector
-    glm::vec3 front;
-    front.x = cos(glm::radians(this->alphaY)) * cos(glm::radians(this->alphaX));
-    front.y = sin(glm::radians(this->alphaX));
-    front.z = sin(glm::radians(this->alphaY)) * cos(glm::radians(this->alphaX));
-    this->front = glm::normalize(front);
+    glm::vec3 front_;
+    front_.x = cos(glm::radians(this->alphaY)) * cos(glm::radians(this->alphaX));
+    front_.y = sin(glm::radians(this->alphaX));
+    front_.z = sin(glm::radians(this->alphaY)) * cos(glm::radians(this->alphaX));
+    this->front = glm::normalize(front_);
     // also re-calculate the Right and Up vector
     this->right = glm::normalize(glm::cross(this->front, this->world_up));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
     this->up = glm::normalize(glm::cross(this->right, this->front));
