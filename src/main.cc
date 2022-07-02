@@ -8,19 +8,35 @@
 #define SCR_WIDTH 800
 #define SCR_HEIGHT 600
 
+#define MAX_DX 5.0f
+#define MAX_DY 5.0f
+float lastX = SCR_WIDTH / 2.0f;
+float lastY = SCR_HEIGHT / 2.0f;
+
 std::map<std::string, shared_program> progMap;
 
 Camera camera( 5.0f, 30.0f, 5.0f, 0.0f, 1.0f, 0.0f, 225.0f, 0.0f);
 
-float lastX = SCR_WIDTH / 2.0f;
-float lastY = SCR_HEIGHT / 2.0f;
+unsigned int uboMatrix;
 
-#define MAX_DX 5.0f
-#define MAX_DY 5.0f
+void update_view() noexcept {
+    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);TEST_OPENGL_ERROR();
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
+                    glm::value_ptr(camera.getViewMatrix()));
+    TEST_OPENGL_ERROR();
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);TEST_OPENGL_ERROR();
+}
+
+void update_projection(float fov, float aspect, float near, float far) noexcept {
+    const auto &projection = glm::perspective(fov, aspect, near, far);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);TEST_OPENGL_ERROR();
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
+    TEST_OPENGL_ERROR();
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);TEST_OPENGL_ERROR();
+}
 
 void window_resize(int width, int height) noexcept {
-    for (const auto &[name, prog] : progMap)
-        prog->update_projection_matrix(glm::radians(30.0f), (float)width / (float)height, 0.1f, 200.0f);
+    update_projection(glm::radians(30.0f), (float)width / (float)height, 0.1f, 200.0f);
     glViewport(0,0, width, height);
     TEST_OPENGL_ERROR();
 }
@@ -47,11 +63,8 @@ void display() noexcept
 }
 
 void processSpecialKeys(int key, int, int) noexcept {
-
     camera.processKeyboard(key);
-
-    for (const auto &[name, prog]: progMap)
-        prog->update_view_matrix(camera.getViewMatrix());
+    update_view();
 }
 
 void processMotion(int x, int y) noexcept {
@@ -61,17 +74,14 @@ void processMotion(int x, int y) noexcept {
     lastY = y;
     if (abs(dx) > MAX_DX || abs(dy) > MAX_DY)
         return;
-    camera.processMouseMovement(dx, dy, true);
 
-    for (const auto &[name, prog]: progMap)
-        prog->update_view_matrix(camera.getViewMatrix());
+    camera.processMouseMovement(dx, dy, true);
+    update_view();
 }
 
 void processMouseScroll(int btn, int, int, int) noexcept {
     camera.processMouseScroll(btn);
-
-    for (const auto &[name, prog]: progMap)
-        prog->update_view_matrix(camera.getViewMatrix());
+    update_view();
 }
 
 void init_glut(int &argc, char *argv[])
@@ -124,12 +134,18 @@ void initObjects(shared_program prog, const std::vector<obj_raw::objRawPtr> &vao
     }
 }
 
-void initUniforms(shared_program prog, const obj_raw::objRawPtr material)
+void initUniforms(shared_program prog)
 {
     // init camera
-    prog->update_view_matrix(camera.getViewMatrix());
-    prog->update_projection_matrix(glm::radians(30.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT,
-                                   0.1f, 200.0f);
+    glGenBuffers(1, &uboMatrix);TEST_OPENGL_ERROR();
+    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);TEST_OPENGL_ERROR();
+    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);TEST_OPENGL_ERROR();
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);TEST_OPENGL_ERROR();
+    // define the range of the buffer that links to a uniform binding point
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrix, 0, 2 * sizeof(glm::mat4));TEST_OPENGL_ERROR();
+
+    update_view();
+    update_projection(glm::radians(30.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 200.0f);
 
     prog->update_materials();
 }
@@ -157,9 +173,10 @@ int main(int argc, char *argv[])
     const auto &matMap = obj_raw::getMap(argv[1]);
 
     for (auto &[mat, meshes] : matMap) {
-        progMap[mat->name] = program::make_program("shaders/vertex.vert", "shaders/fragment.frag", mat);
+        progMap[mat->name] = program::make_program("shaders/vertex.vert", "shaders/fragment.frag",
+                                                   "Matrix", mat);
         progMap[mat->name]->use();
-        initUniforms(progMap[mat->name], mat);
+        initUniforms(progMap[mat->name]);
         initObjects(progMap[mat->name], meshes);
     }
     glutTimerFunc(1000/60, update, 0);

@@ -11,6 +11,9 @@
 
 program::program(obj_raw::objRawPtr mat)
     : material(mat)
+    , vertex_shd_id(0)
+    , fragment_shd_id(0)
+    , UBO_id(0)
 {
     program_id = glCreateProgram();
     TEST_OPENGL_ERROR();
@@ -148,7 +151,7 @@ void program::link_program()
 }
 
 std::shared_ptr<program> program::make_program(const char *vertex_shader_src, const char *fragment_shader_src,
-                                               obj_raw::objRawPtr mat)
+                                               const std::string &UBO_name, obj_raw::objRawPtr mat)
 {
     shared_program prog = std::make_shared<program>(mat);
 
@@ -156,6 +159,11 @@ std::shared_ptr<program> program::make_program(const char *vertex_shader_src, co
     prog->add_shader(fragment_shader_src, GL_FRAGMENT_SHADER);
 
     prog->link_program();
+
+    prog->UBO_id = glGetUniformBlockIndex(prog->program_id, UBO_name.c_str());
+    TEST_OPENGL_ERROR();
+    glUniformBlockBinding(prog->program_id, prog->UBO_id, 0);
+    TEST_OPENGL_ERROR();
 
     return prog;
 }
@@ -181,36 +189,14 @@ void program::add_object_vbo(const std::string &name, const std::string &vbo_nam
     objects.at(name)->add_vbo(vbo_name, data, program_id, unit_size);
 }
 
-void program::update_view_matrix(const glm::mat4 &view) noexcept {
-    GLint model_view_matrix =
-            glGetUniformLocation(program_id, "model_view_matrix");
-    TEST_OPENGL_ERROR();
-    if (model_view_matrix == -1)
-        errx(1, "Could not find uniform model_view_matrix");
-
-    glProgramUniformMatrix4fv(program_id, model_view_matrix, 1, GL_FALSE, glm::value_ptr(view));
-    TEST_OPENGL_ERROR();
-}
-
-void program::update_projection_matrix(float fov, float aspect, float near, float far) noexcept {
-    const auto &projection = glm::perspective(fov, aspect, near, far);
-    GLint projection_matrix =
-            glGetUniformLocation(program_id, "projection_matrix");
-    TEST_OPENGL_ERROR();
-    if (projection_matrix == -1)
-        errx(1, "Could not find uniform projection_matrix");
-
-    glProgramUniformMatrix4fv(program_id, projection_matrix, 1, GL_FALSE, glm::value_ptr(projection));
-    TEST_OPENGL_ERROR();
-}
-
 static inline void update_vec(const GLuint prog_id, const std::string &name, const std::vector<float> &vec) noexcept {
     GLint uniform_location =
             glGetUniformLocation(prog_id, name.c_str());
     TEST_OPENGL_ERROR();
+#ifdef DEBUG
     if (uniform_location == -1)
         warnx("Could not find uniform %s", name.c_str());
-
+#endif
     if (name != "Ns") {
         glUniform3fv(uniform_location, 1, vec.data());
         TEST_OPENGL_ERROR();

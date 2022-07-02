@@ -23,8 +23,6 @@ public:
 
     void add_object_vbo(const std::string &name, const std::string &vbo_name, const std::vector<float> &data, GLint unit_size);
 
-    void update_view_matrix(const glm::mat4 &view) noexcept;
-    void update_projection_matrix(float fov, float aspect, float near, float far) noexcept;
     void update_material(const std::string &name, const std::vector<float> &vec) noexcept;
     void update_materials() noexcept;
 
@@ -39,7 +37,7 @@ public:
     }
 
     static std::shared_ptr<program> make_program(const char *vertex_shader_src, const char *fragment_shader,
-                                                 obj_raw::objRawPtr mat);
+                                                 const std::string &UBO_name, obj_raw::objRawPtr mat);
 
 private:
     void set_shader_id(GLuint shd_id, GLenum type);
@@ -48,6 +46,7 @@ private:
     GLuint program_id;
     GLuint vertex_shd_id;
     GLuint fragment_shd_id;
+    unsigned int UBO_id;
     std::map<std::string, objectPtr> objects;
     obj_raw::objRawPtr material;
 
