@@ -1,17 +1,16 @@
 #include <iostream>
 #include <err.h>
 
-#include "matrix.hh"
-#include "program.hh"
-#include "obj_raw.hh"
-#include "camera.hh"
+#include "reader/obj_raw.hh"
+#include "engine/program.hh"
+#include "engine/camera.hh"
 
 #define SCR_WIDTH 800
 #define SCR_HEIGHT 600
 
 std::map<std::string, shared_program> progMap;
 
-Camera camera( 10.0f, 10.0f, 10.0f, 0.0f, 1.0f, 0.0f, 225.0f, 0.0f);
+Camera camera( 5.0f, 0.0f, 5.0f, 0.0f, 1.0f, 0.0f, 225.0f, 0.0f);
 
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;

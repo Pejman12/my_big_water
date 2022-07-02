@@ -8,8 +8,8 @@
 
 CC = g++
 
-CPP_FILES = matrix.cc program.cc object.cc obj_raw.cc obj_loader.cc camera.cc
-HXX_FILES = matrix.hh program.hh object.hh obj_raw.hh obj_loader.hh camera.hh
+CPP_FILES = src/engine/program.cc src/engine/object.cc src/reader/obj_raw.cc src/reader/obj_loader.cc src/engine/camera.cc
+HXX_FILES = src/engine/program.hh src/engine/object.hh src/reader/obj_raw.hh src/reader/obj_loader.hh src/engine/camera.hh
 OBJ_FILES = $(CPP_FILES:.cc=.o)
 
 CXX_FLAGS += -Wall -Wextra -pedantic -std=c++17
@@ -19,7 +19,7 @@ DEBUG_FLAGS += -DDEBUG -g -O0
 RELEASE_FLAGS += -DNDEBUG -O3
 LDXX_FLAGS = -lGL  -lGLEW -lglut -lpthread
 
-MAIN_FILE = main.cc
+MAIN_FILE = src/main.cc
 DIST = main
 
 SKEL_FILES = $(CPP_FILES) $(HXX_FILES) $(MAIN_FILE)
