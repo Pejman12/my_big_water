@@ -176,3 +176,43 @@ const object &program::get_object(const std::string &name) const {
 void program::add_object_vbo(const std::string &name, const std::string &vbo_name, const std::vector<float> &data, GLint unit_size) {
     objects.at(name).add_vbo(vbo_name, data, program_id, unit_size);
 }
+
+void program::update_view_matrix(const glm::mat4 &view) {
+    GLint model_view_matrix =
+            glGetUniformLocation(program_id, "model_view_matrix");
+    TEST_OPENGL_ERROR();
+    if (model_view_matrix == -1)
+        errx(1, "Could not find uniform model_view_matrix");
+
+    glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(view));
+    TEST_OPENGL_ERROR();
+}
+
+void program::update_projection_matrix(float fov, float aspect, float near, float far) {
+    const auto &projection = glm::perspective(fov, aspect, near, far);
+    GLint projection_matrix =
+            glGetUniformLocation(program_id, "projection_matrix");
+    TEST_OPENGL_ERROR();
+    if (projection_matrix == -1)
+        errx(1, "Could not find uniform projection_matrix");
+
+    glUniformMatrix4fv(projection_matrix, 1, GL_FALSE, glm::value_ptr(projection));
+    TEST_OPENGL_ERROR();
+}
+
+void program::update_material(const std::string &name, const std::vector<float> &vec)
+{
+    GLint uniform_location =
+            glGetUniformLocation(program_id, name.c_str());
+    TEST_OPENGL_ERROR();
+    if (uniform_location == -1)
+        warnx("Could not find uniform %s", name.c_str());
+
+    if (name != "Ns") {
+        glUniform3fv(uniform_location, 1, vec.data());
+        TEST_OPENGL_ERROR();
+    } else {
+        glUniform1f(uniform_location, vec[0]);
+        TEST_OPENGL_ERROR();
+    }
+}

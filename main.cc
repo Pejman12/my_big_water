@@ -1,11 +1,7 @@
-#include <fstream>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/vec3.hpp>
 #include <iostream>
 #include <err.h>
 
 #include "matrix.hh"
-#include "object_vbo.hh"
 #include "program.hh"
 #include "obj_raw.hh"
 #include "camera.hh"
@@ -15,14 +11,7 @@
 
 std::map<std::string, shared_program> progMap;
 
-glm::vec3 cam_pos = glm::vec3(10.0f, 0.0f, 10.0f);
-glm::vec3 cam_target = glm::vec3(0.0f, 0.0f, 0.0f);
-glm::vec3 cam_dir = glm::normalize(cam_target - cam_pos);
-glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-glm::vec3 cam_right = glm::normalize(glm::cross(cam_dir, up));
-glm::vec3 cam_up = glm::normalize(glm::cross(cam_right, cam_dir));
-
-Camera camera(cam_pos, cam_up, 225.0f, 0.0f, SPEED, SENSITIVITY, ZOOM); //TODO: Revoir alphaY, alphaX
+Camera camera( 10.0f, 10.0f, 10.0f, 0.0f, 1.0f, 0.0f, 225.0f, 0.0f);
 
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
@@ -31,14 +20,17 @@ float lastY = SCR_HEIGHT / 2.0f;
 #define MAX_DY 5.0f
 
 void window_resize(int width, int height) {
-    glViewport(0,0,width,height);TEST_OPENGL_ERROR();
+    for (const auto &[name, prog] : progMap)
+        prog->update_projection_matrix(glm::radians(30.0f), (float)width / (float)height, 0.1f, 100.0f);
+    glViewport(0,0, width, height);
+    TEST_OPENGL_ERROR();
 }
 
 void display()
 {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     for (auto &[name, prog]: progMap) {
         for (auto &[objName, obj]: prog->get_objects()) {
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             TEST_OPENGL_ERROR();
             glBindVertexArray(obj.get_vao_id());
             TEST_OPENGL_ERROR();
@@ -55,20 +47,12 @@ void display()
     TEST_OPENGL_ERROR();
 }
 
-void processSpecialKeys(int key, int x, int y) {
+void processSpecialKeys(int key, int, int) {
 
-    camera.ProcessKeyboard(key);
+    camera.processKeyboard(key);
 
-    for (const auto &[name, prog]: progMap) {
-        GLint model_view_matrix =
-                glGetUniformLocation(prog->get_program_id(), "model_view_matrix");
-        TEST_OPENGL_ERROR();
-        if (model_view_matrix == -1)
-            errx(1, "Could not find uniform model_view_matrix");
-
-        glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
-        TEST_OPENGL_ERROR();
-    }
+    for (const auto &[name, prog]: progMap)
+        prog->update_view_matrix(camera.getViewMatrix());
 }
 
 void processMotion(int x, int y) {
@@ -76,22 +60,19 @@ void processMotion(int x, int y) {
     float dy = y - lastY;
     lastX = x;
     lastY = y;
-
     if (abs(dx) > MAX_DX || abs(dy) > MAX_DY)
         return;
+    camera.processMouseMovement(dx, dy, true);
 
-    camera.ProcessMouseMovement(dx, dy, false);
+    for (const auto &[name, prog]: progMap)
+        prog->update_view_matrix(camera.getViewMatrix());
+}
 
-    for (const auto &[name, prog]: progMap) {
-        GLint model_view_matrix =
-                glGetUniformLocation(prog->get_program_id(), "model_view_matrix");
-        TEST_OPENGL_ERROR();
-        if (model_view_matrix == -1)
-            errx(1, "Could not find uniform model_view_matrix");
+void processMouseScroll(int btn, int, int, int) {
+    camera.processMouseScroll(btn);
 
-        glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
-        TEST_OPENGL_ERROR();
-    }
+    for (const auto &[name, prog]: progMap)
+        prog->update_view_matrix(camera.getViewMatrix());
 }
 
 void init_glut(int &argc, char *argv[])
@@ -107,6 +88,7 @@ void init_glut(int &argc, char *argv[])
     glutReshapeFunc(window_resize);
     glutSpecialFunc(processSpecialKeys);
     glutMotionFunc(processMotion);
+    glutMouseFunc(processMouseScroll);
 }
 
 bool init_glew()
@@ -122,7 +104,7 @@ void init_GL()
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     TEST_OPENGL_ERROR();
 
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
     TEST_OPENGL_ERROR();
 
     glClearColor(0.15,0.15,0.15,1.0);
@@ -146,61 +128,18 @@ void initObjects(shared_program prog, const std::vector<obj_raw::objRaw> &vaos)
 void initUniforms(shared_program prog, const obj_raw::objRaw &material)
 {
     // init camera
-    GLint model_view_matrix =
-        glGetUniformLocation(prog->get_program_id(), "model_view_matrix");
-    TEST_OPENGL_ERROR();
-    if (model_view_matrix == -1)
-        errx(1, "Could not find uniform model_view_matrix");
+    prog->update_view_matrix(camera.getViewMatrix());
+    prog->update_projection_matrix(glm::radians(30.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT,
+                                   0.1f, 100.0f);
 
-    glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(camera.GetViewMatrix()));
-    TEST_OPENGL_ERROR();
-
-    glm::mat4 projection = glm::perspective(glm::radians(30.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 400.0f);
-    GLint projection_matrix =
-        glGetUniformLocation(prog->get_program_id(), "projection_matrix");
-    TEST_OPENGL_ERROR();
-    if (projection_matrix == -1)
-        errx(1, "Could not find uniform projection_matrix");
-
-    glUniformMatrix4fv(projection_matrix, 1, GL_FALSE,
-                       glm::value_ptr(projection));
-    TEST_OPENGL_ERROR();
-
-    for (const auto &[name, vec] : material.vecs) {
-        GLint uniform_location =
-            glGetUniformLocation(prog->get_program_id(), name.c_str());
-        TEST_OPENGL_ERROR();
-        if (uniform_location == -1)
-            warnx("Could not find uniform %s", name.c_str());
-
-        if (name != "Ns") {
-            glUniform3fv(uniform_location, 1, vec.data());
-            TEST_OPENGL_ERROR();
-        } else {
-            glUniform1f(uniform_location, vec[0]);
-            TEST_OPENGL_ERROR();
-        }
-    }
+    for (const auto &[name, vec] : material.vecs)
+        prog->update_material(name, vec);
 }
 
 void update(int value)
 {
     value = value % 300;
     glutTimerFunc(1000/60, update, ++value);
-
-/*
-    float scale = (unsigned int)value / 100.0;
-    float r = scale < 1.0 ? scale : 0.0;
-    float g = scale >= 1.0 && scale < 2.0 ? scale - 1.0 : 0.0;
-    float b = scale >= 2.0 ? scale - 2.0 : 0.0;
-
-    progMap.begin()->second->use();
-    glm::vec3 color_vec(r, g, b);
-    GLuint color_location = glGetUniformLocation(progMap.begin()->second->get_program_id(), "Kd");
-    TEST_OPENGL_ERROR();
-    glUniform3fv(color_location, 1, glm::value_ptr(color_vec));
-    TEST_OPENGL_ERROR();
-*/
 
     glutPostRedisplay();
 }

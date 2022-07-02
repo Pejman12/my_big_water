@@ -2,38 +2,40 @@
 
 
 // constructor with vectors
-Camera::Camera(glm::vec3 position_ = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up_ = glm::vec3(0.0f, 1.0f, 0.0f),
-                float yaw_ = ALPHAY, float pitch_ = ALPHAX, float movementSpeed_ = SPEED, float mouseSensitivity_ = SENSITIVITY, float zoom_ = ZOOM) {
-    this->pos = position_;
-    this->world_up = up_;
-    this->alphaY = yaw_;
-    this->alphaX = pitch_;
-    this->movementSpeed = movementSpeed_;
-    this->mouseSensitivity = mouseSensitivity_;
-    this->zoom = zoom_;
+Camera::Camera(glm::vec3 pos_, glm::vec3 up_, float alphaY_, float alphaX_,
+               float movementSpeed_, float mouseSensitivity_)
+               : pos(pos_)
+               , world_up(up_)
+               , alphaY(alphaY_)
+               , alphaX(alphaX_)
+               , movementSpeed(movementSpeed_)
+               , mouseSensitivity(mouseSensitivity_) {
     updateCameraVectors();
 }
 
 // constructor with scalar values
-Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw_, float pitch_) {
-    this->pos = glm::vec3(posX, posY, posZ);
-    this->world_up = glm::vec3(upX, upY, upZ);
-    this->alphaY = yaw_;
-    this->alphaX = pitch_;
+Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ,
+               float alphaY_, float alphaX_)
+               : pos(posX, posY, posZ)
+               , world_up(upX, upY, upZ)
+               , alphaY(alphaY_)
+               , alphaX(alphaX_)
+               , movementSpeed(SPEED)
+               , mouseSensitivity(SENSITIVITY) {
     updateCameraVectors();
 }
 
 // returns the view matrix calculated using Euler Angles and the LookAt Matrix
-glm::mat4 Camera::GetViewMatrix(){
+glm::mat4 Camera::getViewMatrix(){
     return glm::lookAt(this->pos, this->pos + this->front, this->up);
 }
 
 // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
-void Camera::ProcessKeyboard(int direction) {
+void Camera::processKeyboard(int direction) {
     if (direction == GLUT_KEY_UP)
-        this->pos += this->front * this->movementSpeed;
+        this->pos += this->up * this->movementSpeed;
     if (direction == GLUT_KEY_DOWN)
-        this->pos -= this->front * this->movementSpeed;
+        this->pos -= this->up * this->movementSpeed;
     if (direction == GLUT_KEY_LEFT)
         this->pos -= this->right * this->movementSpeed;
     if (direction == GLUT_KEY_RIGHT)
@@ -41,7 +43,7 @@ void Camera::ProcessKeyboard(int direction) {
 }
 
 // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch = true) {
+void Camera::processMouseMovement(float xoffset, float yoffset, bool constrainPitch) {
     xoffset *= this->mouseSensitivity;
     yoffset *= this->mouseSensitivity;
 
@@ -62,12 +64,11 @@ void Camera::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPi
 }
 
 // processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
-void Camera::ProcessMouseScroll(float yoffset) {
-    this->zoom -= (float)yoffset;
-    if (this->zoom < 1.0f)
-        this->zoom = 1.0f;
-    if (this->zoom > 45.0f)
-        this->zoom = 45.0f; 
+void Camera::processMouseScroll(int btn) {
+    if (btn == 3)
+        this->pos += this->front * this->movementSpeed;
+    else if (btn == 4)
+        this->pos -= this->front * this->movementSpeed;
 }
 
 // calculates the front vector from the Camera's (updated) Euler Angles

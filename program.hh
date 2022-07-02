@@ -1,6 +1,8 @@
 #pragma once
 
 #include "object.hh"
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 class program
 {
@@ -19,6 +21,10 @@ public:
     }
 
     void add_object_vbo(const std::string &name, const std::string &vbo_name, const std::vector<float> &data, GLint unit_size);
+
+    void update_view_matrix(const glm::mat4 &view);
+    void update_projection_matrix(float fov, float aspect, float near, float far);
+    void update_material(const std::string &name, const std::vector<float> &vec);
 
     void link_program();
     inline GLuint get_program_id() const

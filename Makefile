@@ -9,15 +9,14 @@
 CC = g++
 
 CPP_FILES = matrix.cc program.cc object.cc obj_raw.cc obj_loader.cc camera.cc
-CPP_FILES +=
-HXX_FILES = matrix.hh program.hh object.hh object_vbo.hh 
-HXX_FILES +=
+HXX_FILES = matrix.hh program.hh object.hh obj_raw.hh obj_loader.hh camera.hh
 OBJ_FILES = $(CPP_FILES:.cc=.o)
 
-CXX_FLAGS += -Wall -Wextra -pedantic -O3 -std=c++17
-CXX_FLAGS +=
+CXX_FLAGS += -Wall -Wextra -pedantic -std=c++17
 CXX_FLAGS += -m64 -march=native
-CXX_FLAGS += -fopt-info-vec-optimized #-fopt-info-vec-missed -ftree-vectorize
+CXX_FLAGS += -ftree-vectorize #-fopt-info-vec-optimized -fopt-info-vec-missed
+DEBUG_FLAGS += -DDEBUG -g -O0
+RELEASE_FLAGS += -DNDEBUG -O3
 LDXX_FLAGS = -lGL  -lGLEW -lglut -lpthread
 
 MAIN_FILE = main.cc
@@ -45,15 +44,18 @@ define default_color
 endef
 
 
+all: CXX_FLAGS += $(RELEASE_FLAGS)
 all: post-build
+
+debug: CXX_FLAGS += $(DEBUG_FLAGS)
+debug: post-build
 
 pre-build:
 	@$(call color,4)
 	@echo "******** Starting Compilation ************"
 	@$(call default_color)
 
-post-build:
-	@make --no-print-directory main-build ; \
+post-build: main-build
 	sta=$$?;	  \
 	$(call color,4); \
 	echo "*********** End Compilation **************"; \

@@ -11,7 +11,6 @@
 #define ALPHAY 225.0f
 #define SPEED 0.5f
 #define SENSITIVITY 0.3f
-#define ZOOM 30.0f
 
 class Camera
 {
@@ -28,25 +27,27 @@ public:
     // camera options
     float movementSpeed;
     float mouseSensitivity;
-    float zoom;
 
     // constructor with vectors
-    Camera(glm::vec3 position_, glm::vec3 up_, float alphaY_, float alphaX_, float movementSpeed_, float mouseSensitivity_, float zoom_);
+    Camera(glm::vec3 pos_ = glm::vec3(0.0f, 0.0f, 0.0f),
+           glm::vec3 up_ = glm::vec3(0.0f, 1.0f, 0.0f),
+           float alphaY_ = ALPHAY, float alphaX_ = ALPHAX, float movementSpeed_ = SPEED,
+           float mouseSensitivity_ = SENSITIVITY);
 
     // constructor with scalar values
-    Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float alphaY, float alphaX);
+    Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float alphaY_, float alphaX_);
 
     // returns the view matrix calculated using Euler Angles and the LookAt Matrix
-    glm::mat4 GetViewMatrix();
+    glm::mat4 getViewMatrix();
 
     // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
-    void ProcessKeyboard(int direction);
+    void processKeyboard(int direction);
     
     // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-    void ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch);
+    void processMouseMovement(float xoffset, float yoffset, bool constrainPitch);
     
     // processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
-    void ProcessMouseScroll(float yoffset);
+    void processMouseScroll(int btn);
     
     // calculates the front vector from the Camera's (updated) Euler Angles
     void updateCameraVectors();

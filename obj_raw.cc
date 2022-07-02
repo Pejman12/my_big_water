@@ -6,7 +6,7 @@ namespace obj_raw {
     objRaw makeObjRawFromMesh(const objl::Mesh &mesh) {
         objRaw obj;
         obj.name = mesh.MeshName;
-        for (int i = 0; i < mesh.Vertices.size(); ++i) {
+        for (size_t i = 0; i < mesh.Vertices.size(); ++i) {
             obj.vecs["position"].push_back(mesh.Vertices[i].Position.X);
             obj.vecs["position"].push_back(mesh.Vertices[i].Position.Y);
             obj.vecs["position"].push_back(mesh.Vertices[i].Position.Z);

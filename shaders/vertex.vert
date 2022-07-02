@@ -16,5 +16,5 @@ void main()
 {
     gl_Position = projection_matrix * model_view_matrix * vec4(position, 1.0);
     vec3 n = normalize(normal);
-    out_color = Kd * n;
+    out_color = Kd;
 }
