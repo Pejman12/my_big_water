@@ -1,16 +1,16 @@
 #include <iostream>
 #include <err.h>
 
-#include "reader/obj_raw.hh"
-#include "engine/program.hh"
-#include "engine/camera.hh"
+#include "obj_raw.hh"
+#include "program.hh"
+#include "camera.hh"
 
 #define SCR_WIDTH 800
 #define SCR_HEIGHT 600
 
 std::map<std::string, shared_program> progMap;
 
-Camera camera( 5.0f, 0.0f, 5.0f, 0.0f, 1.0f, 0.0f, 225.0f, 0.0f);
+Camera camera( 5.0f, 30.0f, 5.0f, 0.0f, 1.0f, 0.0f, 225.0f, 0.0f);
 
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
@@ -18,26 +18,26 @@ float lastY = SCR_HEIGHT / 2.0f;
 #define MAX_DX 5.0f
 #define MAX_DY 5.0f
 
-void window_resize(int width, int height) {
+void window_resize(int width, int height) noexcept {
     for (const auto &[name, prog] : progMap)
-        prog->update_projection_matrix(glm::radians(30.0f), (float)width / (float)height, 0.1f, 100.0f);
+        prog->update_projection_matrix(glm::radians(30.0f), (float)width / (float)height, 0.1f, 200.0f);
     glViewport(0,0, width, height);
     TEST_OPENGL_ERROR();
 }
 
-void display()
+void display() noexcept
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     for (auto &[name, prog]: progMap) {
-        for (auto &[objName, obj]: prog->get_objects()) {
+        prog->use();
+        prog->update_materials();
+        for (const auto &[objName, obj]: prog->get_objects()) {
             TEST_OPENGL_ERROR();
-            glBindVertexArray(obj.get_vao_id());
+            glBindVertexArray(obj->get_vao_id());
             TEST_OPENGL_ERROR();
 
             glDrawArrays(GL_TRIANGLES, 0,
-                         obj.vbo_data_map.at(obj.vbo_ids_map.at("position")).size());
-            TEST_OPENGL_ERROR();
-            glBindVertexArray(0);
+                         obj->vbo_data_map.at(obj->vbo_ids_map.at("position")).size());
             TEST_OPENGL_ERROR();
         }
     }
@@ -46,7 +46,7 @@ void display()
     TEST_OPENGL_ERROR();
 }
 
-void processSpecialKeys(int key, int, int) {
+void processSpecialKeys(int key, int, int) noexcept {
 
     camera.processKeyboard(key);
 
@@ -54,7 +54,7 @@ void processSpecialKeys(int key, int, int) {
         prog->update_view_matrix(camera.getViewMatrix());
 }
 
-void processMotion(int x, int y) {
+void processMotion(int x, int y) noexcept {
     float dx = x - lastX;
     float dy = y - lastY;
     lastX = x;
@@ -67,7 +67,7 @@ void processMotion(int x, int y) {
         prog->update_view_matrix(camera.getViewMatrix());
 }
 
-void processMouseScroll(int btn, int, int, int) {
+void processMouseScroll(int btn, int, int, int) noexcept {
     camera.processMouseScroll(btn);
 
     for (const auto &[name, prog]: progMap)
@@ -114,28 +114,27 @@ void init_GL()
     TEST_OPENGL_ERROR();
 }
 
-void initObjects(shared_program prog, const std::vector<obj_raw::objRaw> &vaos)
+void initObjects(shared_program prog, const std::vector<obj_raw::objRawPtr> &vaos)
 {
-    for (const auto &vao : vaos)
+    for (const auto vao : vaos)
     {
-        prog->add_object(vao.name, 2);
-        prog->add_object_vbo(vao.name, "position", vao.vecs.at("position"), 3);
-        prog->add_object_vbo(vao.name, "normal", vao.vecs.at("normal"), 3);
+        prog->add_object(vao->name, 2);
+        prog->add_object_vbo(vao->name, "position", vao->vecs.at("position"), 3);
+        prog->add_object_vbo(vao->name, "normal", vao->vecs.at("normal"), 3);
     }
 }
 
-void initUniforms(shared_program prog, const obj_raw::objRaw &material)
+void initUniforms(shared_program prog, const obj_raw::objRawPtr material)
 {
     // init camera
     prog->update_view_matrix(camera.getViewMatrix());
     prog->update_projection_matrix(glm::radians(30.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT,
-                                   0.1f, 100.0f);
+                                   0.1f, 200.0f);
 
-    for (const auto &[name, vec] : material.vecs)
-        prog->update_material(name, vec);
+    prog->update_materials();
 }
 
-void update(int value)
+void update(int value) noexcept
 {
     value = value % 300;
     glutTimerFunc(1000/60, update, ++value);
@@ -157,11 +156,11 @@ int main(int argc, char *argv[])
 
     const auto &matMap = obj_raw::getMap(argv[1]);
 
-    for (const auto &[mat, meshes] : matMap) {
-        progMap[mat.name] = program::make_program("shaders/vertex.vert", "shaders/fragment.frag");
-        progMap[mat.name]->use();
-        initUniforms(progMap[mat.name], mat);
-        initObjects(progMap[mat.name], meshes);
+    for (auto &[mat, meshes] : matMap) {
+        progMap[mat->name] = program::make_program("shaders/vertex.vert", "shaders/fragment.frag", mat);
+        progMap[mat->name]->use();
+        initUniforms(progMap[mat->name], mat);
+        initObjects(progMap[mat->name], meshes);
     }
     glutTimerFunc(1000/60, update, 0);
     glutMainLoop();

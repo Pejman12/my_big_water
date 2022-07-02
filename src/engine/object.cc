@@ -11,6 +11,14 @@ object::object(int nb_vbo_)
     TEST_OPENGL_ERROR();
 }
 
+object::~object()
+{
+    glDeleteVertexArrays(1, &vao_id);
+    TEST_OPENGL_ERROR();
+    glDeleteBuffers(nb_vbo, this->vbo_ids.data());
+    TEST_OPENGL_ERROR();
+}
+
 void object::add_vbo(const std::string &name, const std::vector<float> &data, GLuint program_id, GLint unit_size)
 {
     glBindVertexArray(vao_id);

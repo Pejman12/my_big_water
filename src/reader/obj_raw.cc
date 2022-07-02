@@ -3,38 +3,38 @@
 
 namespace obj_raw {
 
-    objRaw makeObjRawFromMesh(const objl::Mesh &mesh) {
-        objRaw obj;
-        obj.name = mesh.MeshName;
+    objRawPtr makeObjRawFromMesh(const objl::Mesh &mesh) {
+        auto obj = std::make_shared<objRaw>();
+        obj->name = mesh.MeshName;
         for (size_t i = 0; i < mesh.Vertices.size(); ++i) {
-            obj.vecs["position"].push_back(mesh.Vertices[i].Position.X);
-            obj.vecs["position"].push_back(mesh.Vertices[i].Position.Y);
-            obj.vecs["position"].push_back(mesh.Vertices[i].Position.Z);
+            obj->vecs["position"].push_back(mesh.Vertices[i].Position.X);
+            obj->vecs["position"].push_back(mesh.Vertices[i].Position.Y);
+            obj->vecs["position"].push_back(mesh.Vertices[i].Position.Z);
 
-            obj.vecs["normal"].push_back(mesh.Vertices[i].Normal.X);
-            obj.vecs["normal"].push_back(mesh.Vertices[i].Normal.Y);
-            obj.vecs["normal"].push_back(mesh.Vertices[i].Normal.Z);
+            obj->vecs["normal"].push_back(mesh.Vertices[i].Normal.X);
+            obj->vecs["normal"].push_back(mesh.Vertices[i].Normal.Y);
+            obj->vecs["normal"].push_back(mesh.Vertices[i].Normal.Z);
         }
 
         return obj;
     }
 
-    objRaw makeObjRawFromMat(const objl::Material &mat) {
-        objRaw obj;
-        obj.name = mat.name;
-        obj.vecs["Ka"].push_back(mat.Ka.X);
-        obj.vecs["Ka"].push_back(mat.Ka.Y);
-        obj.vecs["Ka"].push_back(mat.Ka.Z);
+    objRawPtr makeObjRawFromMat(const objl::Material &mat) {
+        auto obj = std::make_shared<objRaw>();
+        obj->name = mat.name;
+        obj->vecs["Ka"].push_back(mat.Ka.X);
+        obj->vecs["Ka"].push_back(mat.Ka.Y);
+        obj->vecs["Ka"].push_back(mat.Ka.Z);
 
-        obj.vecs["Kd"].push_back(mat.Kd.X);
-        obj.vecs["Kd"].push_back(mat.Kd.Y);
-        obj.vecs["Kd"].push_back(mat.Kd.Z);
+        obj->vecs["Kd"].push_back(mat.Kd.X);
+        obj->vecs["Kd"].push_back(mat.Kd.Y);
+        obj->vecs["Kd"].push_back(mat.Kd.Z);
 
-        obj.vecs["Ks"].push_back(mat.Ks.X);
-        obj.vecs["Ks"].push_back(mat.Ks.Y);
-        obj.vecs["Ks"].push_back(mat.Ks.Z);
+        obj->vecs["Ks"].push_back(mat.Ks.X);
+        obj->vecs["Ks"].push_back(mat.Ks.Y);
+        obj->vecs["Ks"].push_back(mat.Ks.Z);
 
-        obj.vecs["Ns"].push_back(mat.Ns);
+        obj->vecs["Ns"].push_back(mat.Ns);
 
         return obj;
     }
@@ -49,7 +49,7 @@ namespace obj_raw {
         matToMeshsMap res;
 
         for (const auto &mat: mats) {
-            const auto &matObj = makeObjRawFromMat(mat);
+            auto matObj = makeObjRawFromMat(mat);
             std::vector <std::string> seen;
             for (const auto &mesh: meshs) {
                 if (mesh.MeshMaterial.name == mat.name) {

@@ -6,6 +6,7 @@
 #include <GL/glew.h>
 #include <vector>
 #include <map>
+#include <memory>
 
 namespace obj_raw {
     struct objRaw {
@@ -21,11 +22,13 @@ namespace obj_raw {
         }
     };
 
-    using matToMeshsMap = std::map<objRaw, std::vector<objRaw>>;
+    using objRawPtr = std::shared_ptr<objRaw>;
 
-    objRaw makeObjRawFromMesh(const objl::Mesh &mesh);
+    using matToMeshsMap = std::map<objRawPtr , std::vector<objRawPtr>>;
 
-    objRaw makeObjRawFromMat(const objl::Material &mat);
+    objRawPtr makeObjRawFromMesh(const objl::Mesh &mesh);
+
+    objRawPtr makeObjRawFromMat(const objl::Material &mat);
 
     matToMeshsMap getMap(const std::string &filename);
 }

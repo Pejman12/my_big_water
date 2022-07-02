@@ -9,7 +9,9 @@
 
 #define BUFF_SIZE 4096
 
-program::program() {
+program::program(obj_raw::objRawPtr mat)
+    : material(mat)
+{
     program_id = glCreateProgram();
     TEST_OPENGL_ERROR();
     if (program_id == 0) {
@@ -145,20 +147,21 @@ void program::link_program()
     ready = true;
 }
 
-std::shared_ptr<program> program::make_program(const char *vertex_shader_src, const char *fragment_shader_src)
+std::shared_ptr<program> program::make_program(const char *vertex_shader_src, const char *fragment_shader_src,
+                                               obj_raw::objRawPtr mat)
 {
-    shared_program prog = std::make_shared<program>();
+    shared_program prog = std::make_shared<program>(mat);
 
     prog->add_shader(vertex_shader_src, GL_VERTEX_SHADER);
     prog->add_shader(fragment_shader_src, GL_FRAGMENT_SHADER);
 
     prog->link_program();
+
     return prog;
 }
 
-void program::use()
-{
-    if (isready()) {
+void program::use() noexcept {
+    if (ready) {
         glUseProgram(program_id);
         TEST_OPENGL_ERROR();
     } else
@@ -166,29 +169,30 @@ void program::use()
 }
 
 void program::add_object(const std::string &name, int nb_vbo) {
-    objects.emplace(name, nb_vbo);
+    auto obj = std::make_shared<object>(nb_vbo);
+    objects.insert({name, obj});
 }
 
-const object &program::get_object(const std::string &name) const {
+const objectPtr program::get_object(const std::string &name) const {
     return objects.at(name);
 }
 
 void program::add_object_vbo(const std::string &name, const std::string &vbo_name, const std::vector<float> &data, GLint unit_size) {
-    objects.at(name).add_vbo(vbo_name, data, program_id, unit_size);
+    objects.at(name)->add_vbo(vbo_name, data, program_id, unit_size);
 }
 
-void program::update_view_matrix(const glm::mat4 &view) {
+void program::update_view_matrix(const glm::mat4 &view) noexcept {
     GLint model_view_matrix =
             glGetUniformLocation(program_id, "model_view_matrix");
     TEST_OPENGL_ERROR();
     if (model_view_matrix == -1)
         errx(1, "Could not find uniform model_view_matrix");
 
-    glUniformMatrix4fv(model_view_matrix, 1, GL_FALSE, glm::value_ptr(view));
+    glProgramUniformMatrix4fv(program_id, model_view_matrix, 1, GL_FALSE, glm::value_ptr(view));
     TEST_OPENGL_ERROR();
 }
 
-void program::update_projection_matrix(float fov, float aspect, float near, float far) {
+void program::update_projection_matrix(float fov, float aspect, float near, float far) noexcept {
     const auto &projection = glm::perspective(fov, aspect, near, far);
     GLint projection_matrix =
             glGetUniformLocation(program_id, "projection_matrix");
@@ -196,14 +200,13 @@ void program::update_projection_matrix(float fov, float aspect, float near, floa
     if (projection_matrix == -1)
         errx(1, "Could not find uniform projection_matrix");
 
-    glUniformMatrix4fv(projection_matrix, 1, GL_FALSE, glm::value_ptr(projection));
+    glProgramUniformMatrix4fv(program_id, projection_matrix, 1, GL_FALSE, glm::value_ptr(projection));
     TEST_OPENGL_ERROR();
 }
 
-void program::update_material(const std::string &name, const std::vector<float> &vec)
-{
+static inline void update_vec(const GLuint prog_id, const std::string &name, const std::vector<float> &vec) noexcept {
     GLint uniform_location =
-            glGetUniformLocation(program_id, name.c_str());
+            glGetUniformLocation(prog_id, name.c_str());
     TEST_OPENGL_ERROR();
     if (uniform_location == -1)
         warnx("Could not find uniform %s", name.c_str());
@@ -214,5 +217,17 @@ void program::update_material(const std::string &name, const std::vector<float> 
     } else {
         glUniform1f(uniform_location, vec[0]);
         TEST_OPENGL_ERROR();
+    }
+}
+
+void program::update_material(const std::string &name, const std::vector<float> &vec) noexcept
+{
+    material->vecs[name] = vec;
+    update_vec(program_id, name, vec);
+}
+
+void program::update_materials() noexcept {
+    for (const auto &[name, vec] : material->vecs) {
+        update_vec(program_id, name, vec);
     }
 }

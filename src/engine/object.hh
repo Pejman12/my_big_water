@@ -22,6 +22,7 @@
 class object {
 public:
     object(int nb_vbo_);
+    ~object();
 
     void add_vbo(const std::string &name, const std::vector<float> &data, GLuint program_id, GLint unit_size);
 
@@ -44,5 +45,7 @@ private:
     int nb_vbo_added;
     std::vector<GLuint> vbo_ids;
 };
+
+using objectPtr = std::shared_ptr<object>;
 
 #endif

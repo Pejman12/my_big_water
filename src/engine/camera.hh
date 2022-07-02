@@ -38,18 +38,18 @@ public:
     Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float alphaY_, float alphaX_);
 
     // returns the view matrix calculated using Euler Angles and the LookAt Matrix
-    glm::mat4 getViewMatrix();
+    glm::mat4 getViewMatrix() noexcept;
 
     // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
-    void processKeyboard(int direction);
+    void processKeyboard(int direction) noexcept;
     
     // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-    void processMouseMovement(float xoffset, float yoffset, bool constrainPitch);
+    void processMouseMovement(float xoffset, float yoffset, bool constrainPitch) noexcept;
     
     // processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
-    void processMouseScroll(int btn);
+    void processMouseScroll(int btn) noexcept;
     
     // calculates the front vector from the Camera's (updated) Euler Angles
-    void updateCameraVectors();
+    void updateCameraVectors() noexcept;
 
 };

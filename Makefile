@@ -15,6 +15,7 @@ OBJ_FILES = $(CPP_FILES:.cc=.o)
 CXX_FLAGS += -Wall -Wextra -pedantic -std=c++17
 CXX_FLAGS += -m64 -march=native
 CXX_FLAGS += -ftree-vectorize #-fopt-info-vec-optimized -fopt-info-vec-missed
+CXX_FLAGS += -Isrc/engine -Isrc/reader
 DEBUG_FLAGS += -DDEBUG -g -O0
 RELEASE_FLAGS += -DNDEBUG -O3
 LDXX_FLAGS = -lGL  -lGLEW -lglut -lpthread
