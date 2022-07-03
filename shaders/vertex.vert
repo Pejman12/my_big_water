@@ -11,6 +11,7 @@ layout (std140) uniform Matrix
 {
     mat4 projection;
     mat4 view;
+    vec3 lightPosition;
 };
 
 out vec3 out_color;
@@ -19,5 +20,9 @@ void main()
 {
     gl_Position = projection * view * vec4(position, 1.0);
     vec3 n = normalize(normal);
-    out_color = Kd;
+    vec3 l = normalize(lightPosition - position);
+    vec3 r = reflect(l, n);
+    float diffuse = max(dot(l, n), 0.0);
+    float specular = pow(max(dot(r, l), 0.0), Ns);
+    out_color = Ka + Kd * diffuse + Ks * specular;
 }

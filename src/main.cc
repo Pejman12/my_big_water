@@ -16,6 +16,7 @@ float lastY = SCR_HEIGHT / 2.0f;
 std::map<std::string, shared_program> progMap;
 
 Camera camera( 5.0f, 30.0f, 5.0f, 0.0f, 1.0f, 0.0f, 225.0f, 0.0f);
+constexpr glm::vec3 lightPos(0.0f, 40.0f, 0.0f);
 
 unsigned int uboMatrix;
 
@@ -31,6 +32,13 @@ void update_projection(float fov, float aspect, float near, float far) noexcept 
     const auto &projection = glm::perspective(fov, aspect, near, far);
     glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);TEST_OPENGL_ERROR();
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
+    TEST_OPENGL_ERROR();
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);TEST_OPENGL_ERROR();
+}
+
+void update_light() noexcept {
+    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);TEST_OPENGL_ERROR();
+    glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(glm::vec3), glm::value_ptr(lightPos));
     TEST_OPENGL_ERROR();
     glBindBuffer(GL_UNIFORM_BUFFER, 0);TEST_OPENGL_ERROR();
 }
@@ -139,13 +147,14 @@ void initUniforms(shared_program prog)
     // init camera
     glGenBuffers(1, &uboMatrix);TEST_OPENGL_ERROR();
     glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);TEST_OPENGL_ERROR();
-    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);TEST_OPENGL_ERROR();
+    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4) + sizeof(glm::vec3), NULL, GL_STATIC_DRAW);TEST_OPENGL_ERROR();
     glBindBuffer(GL_UNIFORM_BUFFER, 0);TEST_OPENGL_ERROR();
     // define the range of the buffer that links to a uniform binding point
-    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrix, 0, 2 * sizeof(glm::mat4));TEST_OPENGL_ERROR();
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrix, 0, 2 * sizeof(glm::mat4) + sizeof(glm::vec3));TEST_OPENGL_ERROR();
 
     update_view();
     update_projection(glm::radians(30.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 200.0f);
+    update_light();
 
     prog->update_materials();
 }
