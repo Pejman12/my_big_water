@@ -142,9 +142,8 @@ void initObjects(shared_program prog, const std::vector<obj_raw::objRawPtr> &vao
     }
 }
 
-void initUniforms(shared_program prog)
+void initUBO()
 {
-    // init camera
     glGenBuffers(1, &uboMatrix);TEST_OPENGL_ERROR();
     glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);TEST_OPENGL_ERROR();
     glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4) + sizeof(glm::vec3), NULL, GL_STATIC_DRAW);TEST_OPENGL_ERROR();
@@ -155,8 +154,6 @@ void initUniforms(shared_program prog)
     update_view();
     update_projection(glm::radians(30.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 200.0f);
     update_light();
-
-    prog->update_materials();
 }
 
 void update(int value) noexcept
@@ -173,10 +170,8 @@ int main(int argc, char *argv[])
         errx(1, "Usage : %s [filename]", argv[0]);
 
     init_glut(argc, argv);
-
     if (!init_glew())
         errx(1, "Could not initialize glew");
-
     init_GL();
 
     const auto &matMap = obj_raw::getMap(argv[1]);
@@ -184,10 +179,9 @@ int main(int argc, char *argv[])
     for (auto &[mat, meshes] : matMap) {
         progMap[mat->name] = program::make_program("shaders/vertex.vert", "shaders/fragment.frag",
                                                    "Matrix", mat);
-        progMap[mat->name]->use();
-        initUniforms(progMap[mat->name]);
         initObjects(progMap[mat->name], meshes);
     }
+    initUBO();
     glutTimerFunc(1000/60, update, 0);
     glutMainLoop();
 
