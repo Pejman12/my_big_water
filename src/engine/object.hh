@@ -25,6 +25,7 @@ public:
     ~object();
 
     void add_vbo(const std::string &name, const std::vector<float> &data, GLuint program_id, GLint unit_size);
+    void draw();
 
     inline GLuint get_vao_id() const
     {
@@ -37,7 +38,7 @@ public:
     }
 
     std::map<std::string, GLuint> vbo_ids_map;
-    std::map<GLuint, std::vector<float>> vbo_data_map;
+    std::map<GLuint, std::size_t> vbo_size_map;
 
 private:
     GLuint vao_id;
@@ -46,6 +47,6 @@ private:
     std::vector<GLuint> vbo_ids;
 };
 
-using objectPtr = std::shared_ptr<object>;
+using shared_object = std::shared_ptr<object>;
 
 #endif

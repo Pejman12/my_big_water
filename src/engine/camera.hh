@@ -5,6 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <GL/freeglut.h>
 #include <vector>
+#include <memory>
 
 // Default camera values
 #define ALPHAX 0.0f
@@ -51,5 +52,6 @@ public:
     
     // calculates the front vector from the Camera's (updated) Euler Angles
     void updateCameraVectors() noexcept;
-
 };
+
+using shared_camera = std::shared_ptr<Camera>;

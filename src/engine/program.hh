@@ -8,25 +8,12 @@
 class program
 {
 public:
-    program(obj_raw::objRawPtr mat);
+    program(obj_raw::shared_objRaw mat);
     ~program();
     char *getlog(GLint id, GLenum type);
-    void use() noexcept;
-
     void add_shader(const char *filename, GLenum type);
-
-    void add_object(const std::string &name, int nb_vbo);
-    const objectPtr get_object(const std::string &name) const;
-    const inline std::map<std::string, objectPtr> get_objects() const noexcept {
-        return objects;
-    }
-
-    void add_object_vbo(const std::string &name, const std::string &vbo_name, const std::vector<float> &data, GLint unit_size);
-
-    void update_material(const std::string &name, const std::vector<float> &vec) noexcept;
-    void update_materials() noexcept;
-
     void link_program();
+
     inline GLuint get_program_id() const
     {
         return program_id;
@@ -35,9 +22,21 @@ public:
     {
         return ready;
     }
-
     static std::shared_ptr<program> make_program(const char *vertex_shader_src, const char *fragment_shader,
-                                                 const std::string &UBO_name, obj_raw::objRawPtr mat);
+                                                 const std::string &UBO_name, obj_raw::shared_objRaw mat);
+
+    void use() noexcept;
+
+    void init_objects(const std::vector<obj_raw::shared_objRaw> &vaos);
+    const shared_object get_object(const std::string &name) const;
+    inline std::map<std::string, shared_object> get_objects() const noexcept {
+        return objects;
+    }
+
+    void update_material(const std::string &name, const std::vector<float> &vec) noexcept;
+    void update_materials() noexcept;
+
+    void draw() noexcept;
 
 private:
     void set_shader_id(GLuint shd_id, GLenum type);
@@ -47,8 +46,8 @@ private:
     GLuint vertex_shd_id;
     GLuint fragment_shd_id;
     unsigned int UBO_id;
-    std::map<std::string, objectPtr> objects;
-    obj_raw::objRawPtr material;
+    std::map<std::string, shared_object> objects;
+    obj_raw::shared_objRaw material;
 
     bool ready = false;
 };

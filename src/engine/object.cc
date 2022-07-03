@@ -31,7 +31,7 @@ void object::add_vbo(const std::string &name, const std::vector<float> &data, GL
         return;
 
     vbo_ids_map.insert({name, vbo_loc});
-    vbo_data_map.insert({vbo_loc, data});
+    vbo_size_map.insert({vbo_loc, data.size()});
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo_ids[nb_vbo_added++]);
     TEST_OPENGL_ERROR();
@@ -45,6 +45,16 @@ void object::add_vbo(const std::string &name, const std::vector<float> &data, GL
     glEnableVertexAttribArray(vbo_loc);
     TEST_OPENGL_ERROR();
 
+    glBindVertexArray(0);
+    TEST_OPENGL_ERROR();
+}
+
+void object::draw()
+{
+    glBindVertexArray(vao_id);
+    TEST_OPENGL_ERROR();
+    glDrawArrays(GL_TRIANGLES, 0, vbo_size_map[vbo_ids_map["position"]]);
+    TEST_OPENGL_ERROR();
     glBindVertexArray(0);
     TEST_OPENGL_ERROR();
 }

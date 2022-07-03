@@ -8,8 +8,10 @@
 
 CC = g++
 
-CPP_FILES = src/engine/program.cc src/engine/object.cc src/reader/obj_raw.cc src/reader/obj_loader.cc src/engine/camera.cc
-HXX_FILES = src/engine/program.hh src/engine/object.hh src/reader/obj_raw.hh src/reader/obj_loader.hh src/engine/camera.hh
+CPP_FILES = src/engine/program.cc src/engine/object.cc src/reader/obj_raw.cc
+CPP_FILES += src/reader/obj_loader.cc src/engine/camera.cc src/engine/scene.cc
+HXX_FILES = src/engine/program.hh src/engine/object.hh src/reader/obj_raw.hh
+HXX_FILES += src/reader/obj_loader.hh src/engine/camera.hh src/engine/scene.hh
 OBJ_FILES = $(CPP_FILES:.cc=.o)
 
 CXX_FLAGS += -Wall -Wextra -pedantic -std=c++17

@@ -3,7 +3,7 @@
 
 namespace obj_raw {
 
-    objRawPtr makeObjRawFromMesh(const objl::Mesh &mesh) {
+    shared_objRaw makeObjRawFromMesh(const objl::Mesh &mesh) {
         auto obj = std::make_shared<objRaw>();
         obj->name = mesh.MeshName;
         for (size_t i = 0; i < mesh.Vertices.size(); ++i) {
@@ -19,7 +19,7 @@ namespace obj_raw {
         return obj;
     }
 
-    objRawPtr makeObjRawFromMat(const objl::Material &mat) {
+    shared_objRaw makeObjRawFromMat(const objl::Material &mat) {
         auto obj = std::make_shared<objRaw>();
         obj->name = mat.name;
         obj->vecs["Ka"].push_back(mat.Ka.X);

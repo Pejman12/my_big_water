@@ -9,11 +9,11 @@
 
 #define BUFF_SIZE 4096
 
-program::program(obj_raw::objRawPtr mat)
-    : material(mat)
-    , vertex_shd_id(0)
+program::program(obj_raw::shared_objRaw mat)
+    : vertex_shd_id(0)
     , fragment_shd_id(0)
     , UBO_id(0)
+    , material(mat)
 {
     program_id = glCreateProgram();
     TEST_OPENGL_ERROR();
@@ -151,7 +151,7 @@ void program::link_program()
 }
 
 std::shared_ptr<program> program::make_program(const char *vertex_shader_src, const char *fragment_shader_src,
-                                               const std::string &UBO_name, obj_raw::objRawPtr mat)
+                                               const std::string &UBO_name, obj_raw::shared_objRaw mat)
 {
     shared_program prog = std::make_shared<program>(mat);
 
@@ -176,17 +176,18 @@ void program::use() noexcept {
         errx(-1, "Program is not ready");
 }
 
-void program::add_object(const std::string &name, int nb_vbo) {
-    auto obj = std::make_shared<object>(nb_vbo);
-    objects.insert({name, obj});
-}
-
-const objectPtr program::get_object(const std::string &name) const {
+const shared_object program::get_object(const std::string &name) const {
     return objects.at(name);
 }
 
-void program::add_object_vbo(const std::string &name, const std::string &vbo_name, const std::vector<float> &data, GLint unit_size) {
-    objects.at(name)->add_vbo(vbo_name, data, program_id, unit_size);
+void program::init_objects(const std::vector<obj_raw::shared_objRaw> &vaos) {
+    for (const auto &vao : vaos)
+    {
+        auto obj = std::make_shared<object>(2);
+        objects.insert({vao->name, obj});
+        objects.at(vao->name)->add_vbo("position", vao->vecs.at("position"), program_id, 3);
+        objects.at(vao->name)->add_vbo("normal", vao->vecs.at("normal"), program_id, 3);
+    }
 }
 
 static inline void update_vec(const GLuint prog_id, const std::string &name, const std::vector<float> &vec) noexcept {
@@ -216,4 +217,11 @@ void program::update_materials() noexcept {
     for (const auto &[name, vec] : material->vecs) {
         update_vec(program_id, name, vec);
     }
+}
+
+void program::draw() noexcept {
+    use();
+    update_materials();
+    for (const auto &[objName, obj]: objects)
+        obj->draw();
 }

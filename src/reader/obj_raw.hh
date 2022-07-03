@@ -22,13 +22,13 @@ namespace obj_raw {
         }
     };
 
-    using objRawPtr = std::shared_ptr<objRaw>;
+    using shared_objRaw = std::shared_ptr<objRaw>;
 
-    using matToMeshsMap = std::map<objRawPtr , std::vector<objRawPtr>>;
+    using matToMeshsMap = std::map<shared_objRaw , std::vector<shared_objRaw>>;
 
-    objRawPtr makeObjRawFromMesh(const objl::Mesh &mesh);
+    shared_objRaw makeObjRawFromMesh(const objl::Mesh &mesh);
 
-    objRawPtr makeObjRawFromMat(const objl::Material &mat);
+    shared_objRaw makeObjRawFromMat(const objl::Material &mat);
 
     matToMeshsMap getMap(const std::string &filename);
 }
