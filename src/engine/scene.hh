@@ -3,9 +3,9 @@
 #include "program.hh"
 
 class scene {
-    public:
+public:
     scene() = delete;
-    explicit scene(const std::string &obj_file) noexcept;
+    explicit scene(const obj_raw::matToMeshsMap &matMap) noexcept;
 
     void draw() noexcept;
 

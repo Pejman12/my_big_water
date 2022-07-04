@@ -4,6 +4,7 @@
 
 #include "camera.hh"
 #include "scene.hh"
+#include "water.hh"
 
 #define SCR_WIDTH 800
 #define SCR_HEIGHT 600
@@ -24,6 +25,7 @@ int height;
 int lastX = SCR_WIDTH / 2.0f;
 int lastY = SCR_HEIGHT / 2.0f;
 shared_scene Scene = nullptr;
+shared_water Water = nullptr;
 shared_camera camera = std::make_shared<Camera>(CAM_POS, CAM_UP, CAM_ANGLE);
 glm::vec3 lightPos;
 
@@ -84,6 +86,15 @@ void processMouseScroll(int btn, int, int, int) noexcept {
     update_view();
 }
 
+void draw() noexcept {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Scene->draw();
+    Water->draw();
+
+    glutSwapBuffers();
+    TEST_OPENGL_ERROR();
+}
+
 void init_glut(int &argc, char *argv[])
 {
     glutInit(&argc, argv);
@@ -93,7 +104,7 @@ void init_glut(int &argc, char *argv[])
     glutInitWindowSize(SCR_WIDTH, SCR_HEIGHT);
     glutInitWindowPosition(10, 10);
     glutCreateWindow("MY BIG WATER");
-    glutDisplayFunc([](){Scene->draw();});
+    glutDisplayFunc(draw);
     glutReshapeFunc(window_resize);
     glutSpecialFunc(processSpecialKeys);
     glutMotionFunc(processMotion);
@@ -155,7 +166,9 @@ int main(int argc, char *argv[])
         errx(1, "Could not initialize glew");
     init_GL();
 
-    Scene = std::make_shared<scene>(argv[1]);
+    const auto &matMap = obj_raw::getMap(argv[1]);
+    Scene = std::make_shared<scene>(matMap);
+    Water = std::make_shared<water>(matMap);
     initUBO();
     glutTimerFunc(1000/60, update, 0);
     glutMainLoop();
