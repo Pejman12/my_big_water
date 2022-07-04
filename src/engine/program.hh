@@ -1,7 +1,7 @@
 #pragma once
 
-#include "obj_raw.hh"
 #include "object.hh"
+#include "obj_raw.hh"
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/type_ptr.hpp>
 

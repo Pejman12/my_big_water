@@ -1,10 +1,8 @@
 #include <iostream>
 #include <err.h>
+#include <GL/glew.h>
 
-#include "obj_raw.hh"
-#include "program.hh"
 #include "camera.hh"
-
 #include "scene.hh"
 
 #define SCR_WIDTH 800
@@ -14,8 +12,77 @@
 #define CAM_POS 5.0f, 30.0f, 5.0f
 #define CAM_UP 0.0f, 1.0f, 0.0f
 #define CAM_ANGLE 225.0f, 0.0f
+#define FOV 30.0f
+#define NEAR_PLANE 0.1f
+#define FAR_PLANE 200.0f
 
+#define MAX_DX 10.0f
+#define MAX_DY 10.0f
+
+int width;
+int height;
+int lastX = SCR_WIDTH / 2.0f;
+int lastY = SCR_HEIGHT / 2.0f;
 shared_scene Scene = nullptr;
+shared_camera camera = std::make_shared<Camera>(CAM_POS, CAM_UP, CAM_ANGLE);
+glm::vec3 lightPos;
+
+unsigned int uboMatrix;
+
+void update_view() noexcept {
+    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);TEST_OPENGL_ERROR();
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
+                    glm::value_ptr(camera->getViewMatrix()));
+    TEST_OPENGL_ERROR();
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);TEST_OPENGL_ERROR();
+}
+void update_projection(int width_, int height_) noexcept {
+    width = width_ < 1 ? 1 : width_;
+    height = height_ < 1 ? 1 : height_;
+
+    const auto &projection = glm::perspective(glm::radians(FOV), (float)width / (float)height, NEAR_PLANE, FAR_PLANE);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);TEST_OPENGL_ERROR();
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
+    TEST_OPENGL_ERROR();
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);TEST_OPENGL_ERROR();
+}
+
+void update_light(const glm::vec3 &lightPos_) noexcept {
+    lightPos = lightPos_;
+
+    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);TEST_OPENGL_ERROR();
+    glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(glm::vec3), glm::value_ptr(lightPos));
+    TEST_OPENGL_ERROR();
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);TEST_OPENGL_ERROR();
+}
+
+void window_resize(int width, int height) noexcept {
+    update_projection(width, height);
+    glViewport(0,0, width, height);
+    TEST_OPENGL_ERROR();
+}
+
+void processSpecialKeys(int key, int, int) noexcept {
+    camera->processKeyboard(key);
+    update_view();
+}
+
+void processMotion(int x, int y) noexcept {
+    float dx = x - lastX;
+    float dy = y - lastY;
+    lastX = x;
+    lastY = y;
+    if (abs(dx) > MAX_DX || abs(dy) > MAX_DY)
+        return;
+
+    camera->processMouseMovement(dx, dy, true);
+    update_view();
+}
+
+void processMouseScroll(int btn, int, int, int) noexcept {
+    camera->processMouseScroll(btn);
+    update_view();
+}
 
 void init_glut(int &argc, char *argv[])
 {
@@ -27,10 +94,10 @@ void init_glut(int &argc, char *argv[])
     glutInitWindowPosition(10, 10);
     glutCreateWindow("MY BIG WATER");
     glutDisplayFunc([](){Scene->draw();});
-    glutReshapeFunc([](int width, int height){Scene->window_resize(width, height);});
-    glutSpecialFunc([](int key, int, int){Scene->processSpecialKeys(key);});
-    glutMotionFunc([](int x, int y){Scene->processMotion(x, y);});
-    glutMouseFunc([](int btn, int, int, int){Scene->processMouseScroll(btn);});
+    glutReshapeFunc(window_resize);
+    glutSpecialFunc(processSpecialKeys);
+    glutMotionFunc(processMotion);
+    glutMouseFunc(processMouseScroll);
 }
 
 bool init_glew()
@@ -65,6 +132,19 @@ void update(int value) noexcept
     glutPostRedisplay();
 }
 
+void initUBO() {
+    //init ubo
+    glGenBuffers(1, &uboMatrix);TEST_OPENGL_ERROR();
+    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);TEST_OPENGL_ERROR();
+    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4) + sizeof(glm::vec3), NULL, GL_STATIC_DRAW);TEST_OPENGL_ERROR();
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);TEST_OPENGL_ERROR();
+    // define the range of the buffer that links to a uniform binding point
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrix, 0, 2 * sizeof(glm::mat4) + sizeof(glm::vec3));TEST_OPENGL_ERROR();
+    update_view();
+    update_projection(SCR_WIDTH, SCR_HEIGHT);
+    update_light(glm::vec3(LIGHT_POS));
+}
+
 int main(int argc, char *argv[])
 {
     if (argc != 2)
@@ -75,8 +155,8 @@ int main(int argc, char *argv[])
         errx(1, "Could not initialize glew");
     init_GL();
 
-    Scene = std::make_shared<scene>(LIGHT_POS, CAM_POS, CAM_UP, CAM_ANGLE,
-                                                 SCR_WIDTH, SCR_HEIGHT, argv[1]);
+    Scene = std::make_shared<scene>(argv[1]);
+    initUBO();
     glutTimerFunc(1000/60, update, 0);
     glutMainLoop();
 
