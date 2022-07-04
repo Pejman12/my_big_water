@@ -2,9 +2,9 @@
 #include <err.h>
 #include <GL/glew.h>
 
-#include "camera.hh"
-#include "scene.hh"
-#include "water.hh"
+#include "engine/camera.hh"
+#include "engine/scene.hh"
+#include "water/water.hh"
 
 #define SCR_WIDTH 800
 #define SCR_HEIGHT 600
