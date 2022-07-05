@@ -2,12 +2,13 @@
 #include <err.h>
 #include <GL/glew.h>
 
-#include "engine/camera.hh"
-#include "engine/scene.hh"
-#include "water/water.hh"
+#include "camera.hh"
+#include "scene.hh"
+#include "water.hh"
+#include "waterFBO.hh"
 
-#define SCR_WIDTH 800
-#define SCR_HEIGHT 600
+#define SCR_WIDTH 1280
+#define SCR_HEIGHT 720
 
 #define LIGHT_POS 0.0f, 40.0f, 0.0f
 #define CAM_POS 5.0f, 30.0f, 5.0f
@@ -28,6 +29,7 @@ shared_scene Scene = nullptr;
 shared_water Water = nullptr;
 shared_camera camera = std::make_shared<Camera>(CAM_POS, CAM_UP, CAM_ANGLE);
 glm::vec3 lightPos;
+shared_waterFBO fbos = nullptr;
 
 unsigned int uboMatrix;
 
@@ -88,6 +90,14 @@ void processMouseScroll(int btn, int, int, int) noexcept {
 
 void draw() noexcept {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    fbos->bindRefractionFrameBuffer();
+    Scene->draw();
+    fbos->unbindCurrentFrameBuffer();
+    fbos->bindReflectionFrameBuffer();
+    Scene->draw();
+    fbos->unbindCurrentFrameBuffer();
+
     Scene->draw();
     Water->draw();
 
@@ -170,6 +180,10 @@ int main(int argc, char *argv[])
     Scene = std::make_shared<scene>(matMap);
     Water = std::make_shared<water>(matMap);
     initUBO();
+    // create waterFBO
+    fbos = std::make_shared<waterFBO>(SCR_WIDTH, SCR_HEIGHT);
+    Water->add_texture(fbos->getRefractionTexture(), water::texture_type::REFRACTION);
+    Water->add_texture(fbos->getReflectionTexture(), water::texture_type::REFLECTION);
     glutTimerFunc(1000/60, update, 0);
     glutMainLoop();
 

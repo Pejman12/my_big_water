@@ -225,3 +225,7 @@ void program::draw() noexcept {
     for (const auto &[objName, obj]: objects)
         obj->draw();
 }
+
+void program::setTexture(const std::string &name, int value) noexcept {
+    glUniform1i(glGetUniformLocation(program_id, name.c_str()), value);
+}

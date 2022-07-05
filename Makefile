@@ -10,16 +10,16 @@ CC = g++
 
 CPP_FILES = src/engine/program.cc src/engine/object.cc src/reader/obj_raw.cc
 CPP_FILES += src/reader/obj_loader.cc src/engine/camera.cc src/engine/scene.cc
-CPP_FILES += src/water/water.cc
+CPP_FILES += src/water/water.cc src/water/waterFBO.cc
 HXX_FILES = src/engine/program.hh src/engine/object.hh src/reader/obj_raw.hh
 HXX_FILES += src/reader/obj_loader.hh src/engine/camera.hh src/engine/scene.hh
-HXX_FILES += src/water/water.hh
+HXX_FILES += src/water/water.hh src/water/waterFBO.hh
 OBJ_FILES = $(CPP_FILES:.cc=.o)
 
 CXX_FLAGS += -Wall -Wextra -pedantic -std=c++17
 CXX_FLAGS += -m64 -march=native
 CXX_FLAGS += -ftree-vectorize #-fopt-info-vec-optimized -fopt-info-vec-missed
-CXX_FLAGS += -Isrc/engine -Isrc/reader
+CXX_FLAGS += -Isrc/engine -Isrc/reader -Isrc/water
 DEBUG_FLAGS += -DDEBUG -g -O0
 RELEASE_FLAGS += -DNDEBUG -O3
 LDXX_FLAGS = -lGL  -lGLEW -lglut -lpthread
