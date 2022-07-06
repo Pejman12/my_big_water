@@ -250,3 +250,16 @@ void program::setPlane(const glm::vec4 &plane) noexcept {
     TEST_OPENGL_ERROR();
     glUseProgram(0);
 }
+
+void program::setTime(const float time) noexcept {
+    use();
+    GLint location = glGetUniformLocation(program_id, "time");
+    TEST_OPENGL_ERROR();
+#ifdef DEBUG
+    if (location == -1)
+        warnx("Could not find uniform time");
+#endif
+    glUniform1f(location, time);
+    TEST_OPENGL_ERROR();
+    glUseProgram(0);
+}

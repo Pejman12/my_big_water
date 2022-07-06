@@ -10,6 +10,8 @@ uniform sampler2D refraction;
 uniform sampler2D reflection;
 uniform sampler2D dudv;
 
+uniform float time;
+
 const float waveStrength = 0.01;
 
 void main()
@@ -18,10 +20,13 @@ void main()
     vec2 uvRefraction = vec2(ndc.x, ndc.y);
     vec2 uvReflection = vec2(ndc.x, -ndc.y);
 
-    vec2 distortion = (texture(dudv, vec2(texCoord.x, texCoord.y)).rg * 2.0 - 1.0) * waveStrength;
+    vec2 distortion = (texture(dudv, vec2(texCoord.x + time, texCoord.y)).rg * 2.0 - 1.0) * waveStrength;
 
     uvRefraction += distortion;
+    uvRefraction = clamp(uvRefraction, 0.0001, 0.9999);
     uvReflection += distortion;
+    uvReflection.x = clamp(uvReflection.x, 0.0001, 0.9999);
+    uvReflection.y = clamp(uvReflection.y, -0.9999, -0.0001);
 
     output_color = mix(texture(reflection, uvReflection), texture(refraction, uvRefraction), 0.5);
 }

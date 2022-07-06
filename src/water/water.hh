@@ -8,8 +8,7 @@ class water {
 public:
     enum class texture_type {
         REFRACTION,
-        REFLECTION,
-        DUDV
+        REFLECTION
     };
     water() = delete;
     explicit water(const obj_raw::matToMeshsMap &matMap) noexcept;
@@ -21,6 +20,7 @@ public:
     shared_texture refractionTexture;
     shared_texture reflectionTexture;
     shared_texture dudvTexture;
+    float time;
 };
 
 using shared_water = std::shared_ptr<water>;

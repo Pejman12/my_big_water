@@ -3,6 +3,7 @@
 water::water(const obj_raw::matToMeshsMap &matMap) noexcept
     : refractionTexture(nullptr)
     , reflectionTexture(nullptr)
+    , time(0.0)
 {
     for (auto &[mat, meshes] : matMap) {
         if (mat->name == "Material.009") {
@@ -22,6 +23,9 @@ void water::draw() noexcept {
     reflectionTexture->bind(1);
     prog->setTexture("dudv", 2);
     dudvTexture->bind(2);
+    time += 0.01;
+    time = time > 1.0 ? 0.0 : time;
+    prog->setTime(time);
     prog->draw();
 }
 
@@ -32,8 +36,5 @@ void water::add_texture(shared_texture texture, texture_type type) noexcept {
     } else if (type == texture_type::REFLECTION) {
         prog->setTexture("reflection", 1);
         reflectionTexture = texture;
-    } else if (type == texture_type::DUDV) {
-        prog->setTexture("dudv", 2);
-        dudvTexture = texture;
     }
 }
