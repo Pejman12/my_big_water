@@ -14,9 +14,9 @@
     {                                                                          \
         GLenum err = glGetError();                                             \
         if (err != GL_NO_ERROR)                                                \
-            std::cerr << "OpenGL ERROR! : line " << __FUNCTION__ << __LINE__ << ", code : "    \
-                      << err << std::endl;                                     \
-    } while (0)
+            std::cerr << "OpenGL ERROR! : in function "                         \
+            << __FUNCTION__  << " line "<< __LINE__ << ", code : " << err << std::endl; \
+    } while (0)                                                                \
 
 
 class object {

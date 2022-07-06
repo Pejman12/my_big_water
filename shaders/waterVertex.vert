@@ -15,12 +15,12 @@ layout (std140) uniform Matrix
 };
 
 out vec3 out_color;
-out vec2 out_uv;
+out vec4 clipSpace;
 
 void main()
 {
-    gl_Position = projection * view * vec4(position, 1.0);
-    out_uv = gl_Position.xy;
+    clipSpace = projection * view * vec4(position, 1.0);
+    gl_Position = clipSpace;
     vec3 n = normalize(normal);
     vec3 l = normalize(lightPosition - position);
     vec3 r = reflect(l, n);

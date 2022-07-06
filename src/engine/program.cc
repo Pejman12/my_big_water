@@ -191,8 +191,7 @@ void program::init_objects(const std::vector<obj_raw::shared_objRaw> &vaos) {
 }
 
 static inline void update_vec(const GLuint prog_id, const std::string &name, const std::vector<float> &vec) noexcept {
-    GLint uniform_location =
-            glGetUniformLocation(prog_id, name.c_str());
+    GLint uniform_location = glGetUniformLocation(prog_id, name.c_str());
     TEST_OPENGL_ERROR();
 #ifdef DEBUG
     if (uniform_location == -1)
@@ -224,8 +223,30 @@ void program::draw() noexcept {
     update_materials();
     for (const auto &[objName, obj]: objects)
         obj->draw();
+    glUseProgram(0);
 }
 
 void program::setTexture(const std::string &name, int value) noexcept {
-    glUniform1i(glGetUniformLocation(program_id, name.c_str()), value);
+    use();
+    GLint location = glGetUniformLocation(program_id, name.c_str());
+    TEST_OPENGL_ERROR();
+#ifdef DEBUG
+    if (location == -1)
+        warnx("Could not find uniform %s", name.c_str());
+#endif
+    glUniform1i(location, value);TEST_OPENGL_ERROR();
+    glUseProgram(0);
+}
+
+void program::setPlane(const glm::vec4 &plane) noexcept {
+    use();
+    GLint location = glGetUniformLocation(program_id, "plane");
+    TEST_OPENGL_ERROR();
+#ifdef DEBUG
+    if (location == -1)
+        warnx("Could not find uniform plane");
+#endif
+    glUniform4fv(location, 1, glm::value_ptr(plane));
+    TEST_OPENGL_ERROR();
+    glUseProgram(0);
 }

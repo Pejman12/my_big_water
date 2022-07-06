@@ -1,8 +1,19 @@
 #pragma once
 
+#include <iostream>
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include <memory>
+
+#define TEST_OPENGL_ERROR()                                                     \
+    do                                                                          \
+    {                                                                           \
+        GLenum err = glGetError();                                              \
+        if (err != GL_NO_ERROR)                                                 \
+            std::cerr << "OpenGL ERROR! : in function " << __FUNCTION__         \
+                      << " line " << __LINE__ << ", code : " << err << std::endl;\
+    } while (0)
+
 
 class waterFBO
 {
@@ -23,13 +34,9 @@ public:
     void bindRefractionFrameBuffer() noexcept;
     void bindReflectionFrameBuffer() noexcept;
 
+    int width;
+    int height;
 private:
-    int displayWidth;
-    int displayHeight;
-    const int REFRACTION_WIDTH;
-    const int REFRACTION_HEIGHT;
-    const int REFLECTION_WIDTH;
-    const int REFLECTION_HEIGHT;
 
     unsigned int reflectionFBO;
     unsigned int reflectionTexture;

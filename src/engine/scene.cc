@@ -12,8 +12,10 @@ scene::scene(const obj_raw::matToMeshsMap &matMap) noexcept
     }
 }
 
-void scene::draw() noexcept {
-    for (auto &[name, prog]: progMap)
+void scene::draw(const glm::vec4 &plane) noexcept {
+    for (auto &[name, prog]: progMap) {
+        prog->setPlane(plane);
         prog->draw();
+    }
 }
 

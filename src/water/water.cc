@@ -15,14 +15,12 @@ water::water(const obj_raw::matToMeshsMap &matMap) noexcept
 }
 
 void water::draw() noexcept {
-    if (reflectionTexture != 0) {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, reflectionTexture);
-    }
-    if (refractionTexture != 0) {
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, refractionTexture);
-    }
+    prog->setTexture("refraction", 0);
+    glActiveTexture(GL_TEXTURE0);TEST_OPENGL_ERROR();
+    glBindTexture(GL_TEXTURE_2D, refractionTexture);TEST_OPENGL_ERROR();
+    prog->setTexture("reflection", 1);
+    glActiveTexture(GL_TEXTURE1);TEST_OPENGL_ERROR();
+    glBindTexture(GL_TEXTURE_2D, reflectionTexture);TEST_OPENGL_ERROR();
     prog->draw();
 }
 

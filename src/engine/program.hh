@@ -36,6 +36,7 @@ public:
     void update_material(const std::string &name, const std::vector<float> &vec) noexcept;
     void update_materials() noexcept;
     void setTexture(const std::string &name, int value) noexcept;
+    void setPlane(const glm::vec4 &plane) noexcept;
 
     void draw() noexcept;
 
