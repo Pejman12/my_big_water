@@ -4,6 +4,7 @@ water::water(const obj_raw::matToMeshsMap &matMap) noexcept
     : refractionTexture(nullptr)
     , reflectionTexture(nullptr)
     , time(0.0)
+    , camPos(5.0f, 30.0f, 5.0f)
 {
     for (auto &[mat, meshes] : matMap) {
         if (mat->name == "Material.009") {
@@ -23,9 +24,10 @@ void water::draw() noexcept {
     reflectionTexture->bind(1);
     prog->setTexture("dudv", 2);
     dudvTexture->bind(2);
-    time += 0.004;
+    time += 0.002;
     time = time > 1.0 ? 0.0 : time;
     prog->setTime(time);
+    prog->setCamPos(camPos);
     prog->draw();
 }
 

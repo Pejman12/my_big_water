@@ -17,8 +17,6 @@ texture::texture(const std::string &fileName, bool hasTransparency)
     : fileName(fileName)
 {
     unsigned char **pixels_ = read_png(fileName.c_str(), &width, &height);
-    for (int i = 0; i < width; i += 3)
-        std::cout << (int)pixels_[0][i] << ' ' << (int)pixels_[0][i + 1] << ' ' << (int)pixels_[0][i + 2] << std::endl;
     auto pixels = flatten(pixels_, width * 3, height);
     for (int i = 0; i < height; free(pixels_[i++]));
     free(pixels_);

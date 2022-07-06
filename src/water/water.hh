@@ -21,6 +21,7 @@ public:
     shared_texture reflectionTexture;
     shared_texture dudvTexture;
     float time;
+    glm::vec3 camPos;
 };
 
 using shared_water = std::shared_ptr<water>;

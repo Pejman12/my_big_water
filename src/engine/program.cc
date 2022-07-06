@@ -213,14 +213,15 @@ void program::update_material(const std::string &name, const std::vector<float> 
 }
 
 void program::update_materials() noexcept {
+    use();
     for (const auto &[name, vec] : material->vecs) {
         update_vec(program_id, name, vec);
     }
+    glUseProgram(0);
 }
 
 void program::draw() noexcept {
     use();
-    update_materials();
     for (const auto &[objName, obj]: objects)
         obj->draw();
     glUseProgram(0);
@@ -260,6 +261,19 @@ void program::setTime(const float time) noexcept {
         warnx("Could not find uniform time");
 #endif
     glUniform1f(location, time);
+    TEST_OPENGL_ERROR();
+    glUseProgram(0);
+}
+
+void program::setCamPos(const glm::vec3 &pos) noexcept {
+    use();
+    GLint location = glGetUniformLocation(program_id, "camPos");
+    TEST_OPENGL_ERROR();
+#ifdef DEBUG
+    if (location == -1)
+        warnx("Could not find uniform camPos");
+#endif
+    glUniform3fv(location, 1, glm::value_ptr(pos));
     TEST_OPENGL_ERROR();
     glUseProgram(0);
 }

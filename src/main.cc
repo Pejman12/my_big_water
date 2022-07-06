@@ -36,6 +36,7 @@ shared_waterFBO fbos = nullptr;
 unsigned int uboMatrix;
 
 void update_view() noexcept {
+    Water->camPos = camera->pos;
     glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);TEST_OPENGL_ERROR();
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
                     glm::value_ptr(camera->getViewMatrix()));

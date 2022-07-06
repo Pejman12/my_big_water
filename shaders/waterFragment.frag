@@ -3,6 +3,7 @@
 in vec3 out_color;
 in vec4 clipSpace;
 in vec2 texCoord;
+in vec3 toCameraVector;
 
 layout(location = 0) out vec4 output_color;
 
@@ -30,6 +31,10 @@ void main()
     uvReflection.x = clamp(uvReflection.x, 0.0001, 0.9999);
     uvReflection.y = clamp(uvReflection.y, -0.9999, -0.0001);
 
-    output_color = mix(texture(reflection, uvReflection), texture(refraction, uvRefraction), 0.5);
+    vec3 viewVector = normalize(toCameraVector);
+    float refractiveFactor = dot(viewVector, vec3(0.0, 1.0, 0.0));
+    refractiveFactor = pow(refractiveFactor, 3.0);
+
+    output_color = mix(texture(reflection, uvReflection), texture(refraction, uvRefraction), refractiveFactor);
     output_color = mix(output_color, vec4(0.0, 0.3, 0.5, 1.0), 0.2);
 }

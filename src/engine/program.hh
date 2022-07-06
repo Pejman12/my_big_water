@@ -38,6 +38,7 @@ public:
     void setTexture(const std::string &name, int value) noexcept;
     void setPlane(const glm::vec4 &plane) noexcept;
     void setTime(const float time) noexcept;
+    void setCamPos(const glm::vec3 &pos) noexcept;
 
     void draw() noexcept;
 
