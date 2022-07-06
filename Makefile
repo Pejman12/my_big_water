@@ -10,19 +10,21 @@ CC = g++
 
 CPP_FILES = src/engine/program.cc src/engine/object.cc src/reader/obj_raw.cc
 CPP_FILES += src/reader/obj_loader.cc src/engine/camera.cc src/engine/scene.cc
-CPP_FILES += src/water/water.cc src/water/waterFBO.cc
+CPP_FILES += src/water/water.cc src/water/waterFBO.cc src/utils/io_png.cc
+CPP_FILES += src/engine/texture.cc
 HXX_FILES = src/engine/program.hh src/engine/object.hh src/reader/obj_raw.hh
 HXX_FILES += src/reader/obj_loader.hh src/engine/camera.hh src/engine/scene.hh
-HXX_FILES += src/water/water.hh src/water/waterFBO.hh
+HXX_FILES += src/water/water.hh src/water/waterFBO.hh src/utils/io_png.hh
+HXX_FILES += src/engine/texture.hh
 OBJ_FILES = $(CPP_FILES:.cc=.o)
 
 CXX_FLAGS += -Wall -Wextra -pedantic -std=c++17
-CXX_FLAGS += -m64 -march=native
+CXX_FLAGS += -m64 -march=native -fopenmp
 CXX_FLAGS += -ftree-vectorize #-fopt-info-vec-optimized -fopt-info-vec-missed
-CXX_FLAGS += -Isrc/engine -Isrc/reader -Isrc/water
+CXX_FLAGS += -Isrc/engine -Isrc/reader -Isrc/water -Isrc/utils
 DEBUG_FLAGS += -DDEBUG -g -O0
 RELEASE_FLAGS += -DNDEBUG -O3
-LDXX_FLAGS = -lGL  -lGLEW -lglut -lpthread
+LDXX_FLAGS = -lGL  -lGLEW -lglut -lpthread -lpng
 
 MAIN_FILE = src/main.cc
 DIST = main

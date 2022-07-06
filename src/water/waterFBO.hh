@@ -1,5 +1,6 @@
 #pragma once
 
+#include "texture.hh"
 #include <iostream>
 #include <GL/glew.h>
 #include <GL/glut.h>
@@ -21,15 +22,14 @@ public:
     waterFBO(int width, int height);
     ~waterFBO();
     unsigned int createFrameBuffer();
-    unsigned int createTextureAttachment(int width, int height);
     unsigned int createDepthTextureAttachment(int width, int height);
     unsigned int createDepthBufferAttachment(int width, int height);
     void bindFrameBuffer(unsigned int frameBuffer, int width, int height);
     void initialiseRefractionFrameBuffer();
     void initialiseReflectionFrameBuffer();
     unsigned int getRefractionDepthTexture();
-    unsigned int getRefractionTexture();
-    unsigned int getReflectionTexture();
+    shared_texture getRefractionTexture();
+    shared_texture getReflectionTexture();
     void unbindCurrentFrameBuffer() noexcept;
     void bindRefractionFrameBuffer() noexcept;
     void bindReflectionFrameBuffer() noexcept;
@@ -39,11 +39,11 @@ public:
 private:
 
     unsigned int reflectionFBO;
-    unsigned int reflectionTexture;
+    shared_texture reflectionTexture;
     unsigned int reflectionDepthBuffer;
 
     unsigned int refractionFBO;
-    unsigned int refractionTexture;
+    shared_texture refractionTexture;
     unsigned int refractionDepthTexture;
 };
 

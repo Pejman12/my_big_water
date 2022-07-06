@@ -70,7 +70,7 @@ namespace objl
     // Structure: Vertex
     //
     // Description: Model Vertex object that holds
-    //	a Position, Normal, and Texture Coordinate
+    //	a Position, Normal, and texture Coordinate
     struct Vertex
     {
         // Position Vector
@@ -79,7 +79,7 @@ namespace objl
         // Normal Vector
         Vector3 Normal;
 
-        // Texture Coordinate Vector
+        // texture Coordinate Vector
         Vector2 TextureCoordinate;
     };
 
@@ -110,15 +110,15 @@ namespace objl
         float d;
         // Illumination
         int illum;
-        // Ambient Texture Map
+        // Ambient texture Map
         std::string map_Ka;
-        // Diffuse Texture Map
+        // Diffuse texture Map
         std::string map_Kd;
-        // Specular Texture Map
+        // Specular texture Map
         std::string map_Ks;
         // Specular Hightlight Map
         std::string map_Ns;
-        // Alpha Texture Map
+        // Alpha texture Map
         std::string map_d;
         // Bump Map
         std::string map_bump;

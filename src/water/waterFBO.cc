@@ -10,10 +10,8 @@ waterFBO::waterFBO(int width_, int height_)
 
 waterFBO::~waterFBO() {
     glDeleteFramebuffers(1, &reflectionFBO);
-    glDeleteTextures(1, &reflectionTexture);
     glDeleteRenderbuffers(1, &reflectionDepthBuffer);
     glDeleteFramebuffers(1, &refractionFBO);
-    glDeleteTextures(1, &refractionTexture);
     glDeleteTextures(1, &refractionDepthTexture);
 }
 
@@ -30,11 +28,11 @@ void waterFBO::unbindCurrentFrameBuffer() noexcept {
     glViewport(0, 0, width, height);TEST_OPENGL_ERROR();
 }
 
-unsigned int waterFBO::getReflectionTexture() {
+shared_texture waterFBO::getReflectionTexture() {
     return reflectionTexture;
 }
 
-unsigned int waterFBO::getRefractionTexture() {
+shared_texture waterFBO::getRefractionTexture() {
     return refractionTexture;
 }
 
@@ -44,14 +42,14 @@ unsigned int waterFBO::getRefractionDepthTexture() {
 
 void waterFBO::initialiseReflectionFrameBuffer() {
     reflectionFBO = createFrameBuffer();
-    reflectionTexture = createTextureAttachment(width, height);
+    reflectionTexture = texture::createTextureAttachment(width, height);
     reflectionDepthBuffer = createDepthBufferAttachment(width, height);
     unbindCurrentFrameBuffer();
 }
 
 void waterFBO::initialiseRefractionFrameBuffer() {
     refractionFBO = createFrameBuffer();
-    refractionTexture = createTextureAttachment(width, height);
+    refractionTexture = texture::createTextureAttachment(width, height);
     refractionDepthTexture = createDepthTextureAttachment(width, height);
     unbindCurrentFrameBuffer();
 }
@@ -69,18 +67,6 @@ unsigned int waterFBO::createFrameBuffer() {
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);TEST_OPENGL_ERROR();
     glDrawBuffer(GL_COLOR_ATTACHMENT0);TEST_OPENGL_ERROR();
     return fbo;
-}
-
-unsigned int waterFBO::createTextureAttachment(int width, int height) {
-    unsigned int texture;
-    glGenTextures(1, &texture);TEST_OPENGL_ERROR();
-    glBindTexture(GL_TEXTURE_2D, texture);TEST_OPENGL_ERROR();
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-    TEST_OPENGL_ERROR();
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);TEST_OPENGL_ERROR();
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);TEST_OPENGL_ERROR();
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);TEST_OPENGL_ERROR();
-    return texture;
 }
 
 unsigned int waterFBO::createDepthTextureAttachment(int width, int height) {
