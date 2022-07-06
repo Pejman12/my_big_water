@@ -15,11 +15,15 @@ out vec3 out_color;
 out vec4 clipSpace;
 out vec2 texCoord;
 out vec3 toCameraVector;
+out vec3 fromLightVector;
+
+const float tiling = 0.3;
 
 void main()
 {
     clipSpace = projection * view * vec4(position, 1.0);
     gl_Position = clipSpace;
-    texCoord = vec2(position.x/2.0 + 0.5, position.z/2.0 + 0.5);
+    texCoord = vec2(position.x/2.0 + 0.5, position.z/2.0 + 0.5) * tiling;
     toCameraVector = camPos - position;
+    fromLightVector = position - lightPosition;
 }

@@ -3,6 +3,7 @@
 water::water(const obj_raw::matToMeshsMap &matMap) noexcept
     : refractionTexture(nullptr)
     , reflectionTexture(nullptr)
+    , depthTexture(0)
     , time(0.0)
     , camPos(5.0f, 30.0f, 5.0f)
 {
@@ -14,7 +15,7 @@ water::water(const obj_raw::matToMeshsMap &matMap) noexcept
             break;
         }
     }
-    dudvTexture = std::make_shared<texture>("textures/dudv2.png", false);
+    dudvTexture = std::make_shared<texture>("textures/dudv1.png", false);
 }
 
 void water::draw() noexcept {
@@ -24,11 +25,17 @@ void water::draw() noexcept {
     reflectionTexture->bind(1);
     prog->setTexture("dudv", 2);
     dudvTexture->bind(2);
-    time += 0.002;
+    prog->setTexture("depth", 3);
+    glActiveTexture(GL_TEXTURE0 + 3);TEST_OPENGL_ERROR();
+    glBindTexture(GL_TEXTURE_2D, depthTexture);TEST_OPENGL_ERROR();
+    glEnable(GL_BLEND);TEST_OPENGL_ERROR();
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);TEST_OPENGL_ERROR();
+    time += 0.0015f;
     time = time > 1.0 ? 0.0 : time;
     prog->setTime(time);
     prog->setCamPos(camPos);
     prog->draw();
+    glDisable(GL_BLEND);TEST_OPENGL_ERROR();
 }
 
 void water::add_texture(shared_texture texture, texture_type type) noexcept {

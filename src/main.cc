@@ -107,13 +107,13 @@ void draw() noexcept {
 
     fbos->bindRefractionFrameBuffer();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    Scene->draw(glm::vec4(0.0, -1.0, 0.0, WATER_HEIGHT));
+    Scene->draw(glm::vec4(0.0, -1.0, 0.0, WATER_HEIGHT + 0.07f));
 
     fbos->bindReflectionFrameBuffer();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     float dist = 2 * (camera->pos.y - WATER_HEIGHT);
     change_camera_side(dist);
-    Scene->draw(glm::vec4(0.0, 1.0, 0.0, -WATER_HEIGHT));
+    Scene->draw(glm::vec4(0.0, 1.0, 0.0, -WATER_HEIGHT - 0.07f));
     fbos->unbindCurrentFrameBuffer();
     change_camera_side(-dist);
 
@@ -135,7 +135,7 @@ void init_glut(int &argc, char *argv[])
     glutInitWindowPosition(10, 10);
     glutCreateWindow("MY BIG WATER");
     glutDisplayFunc(draw);
-    glutReshapeFunc(window_resize);
+    //glutReshapeFunc(window_resize);
     glutSpecialFunc(processSpecialKeys);
     glutMotionFunc(processMotion);
     glutMouseFunc(processMouseScroll);
@@ -201,6 +201,8 @@ int main(int argc, char *argv[])
     Water = std::make_shared<water>(matMap);
     Water->add_texture(fbos->getRefractionTexture(), water::texture_type::REFRACTION);
     Water->add_texture(fbos->getReflectionTexture(), water::texture_type::REFLECTION);
+    Water->prog->setTexture("depth", 2);
+    Water->depthTexture = fbos->getRefractionDepthTexture();
     initUBO();
     // create waterFBO
     glutTimerFunc(1000/60, update, 0);

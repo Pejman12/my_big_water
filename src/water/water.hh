@@ -20,6 +20,7 @@ public:
     shared_texture refractionTexture;
     shared_texture reflectionTexture;
     shared_texture dudvTexture;
+    GLuint depthTexture;
     float time;
     glm::vec3 camPos;
 };
