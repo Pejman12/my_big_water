@@ -23,7 +23,7 @@ void water::draw() noexcept {
     reflectionTexture->bind(1);
     prog->setTexture("dudv", 2);
     dudvTexture->bind(2);
-    time += 0.01;
+    time += 0.004;
     time = time > 1.0 ? 0.0 : time;
     prog->setTime(time);
     prog->draw();

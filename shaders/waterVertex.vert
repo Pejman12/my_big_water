@@ -18,7 +18,7 @@ out vec3 out_color;
 out vec4 clipSpace;
 out vec2 texCoord;
 
-const float tiling = 6.0;
+const float tiling = 1.0;
 
 void main()
 {

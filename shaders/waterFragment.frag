@@ -20,13 +20,16 @@ void main()
     vec2 uvRefraction = vec2(ndc.x, ndc.y);
     vec2 uvReflection = vec2(ndc.x, -ndc.y);
 
-    vec2 distortion = (texture(dudv, vec2(texCoord.x + time, texCoord.y)).rg * 2.0 - 1.0) * waveStrength;
+    vec2 distortion1 = (texture(dudv, vec2(texCoord.x + time, texCoord.y)).rg * 2.0 - 1.0) * waveStrength;
+    vec2 distortion2 = (texture(dudv, vec2(-texCoord.x + time, texCoord.y + time)).rg * 2.0 - 1.0) * waveStrength;
+    vec2 totalDistortion = distortion1 + distortion2;
 
-    uvRefraction += distortion;
+    uvRefraction += totalDistortion;
     uvRefraction = clamp(uvRefraction, 0.0001, 0.9999);
-    uvReflection += distortion;
+    uvReflection += totalDistortion;
     uvReflection.x = clamp(uvReflection.x, 0.0001, 0.9999);
     uvReflection.y = clamp(uvReflection.y, -0.9999, -0.0001);
 
     output_color = mix(texture(reflection, uvReflection), texture(refraction, uvRefraction), 0.5);
+    output_color = mix(output_color, vec4(0.0, 0.3, 0.5, 1.0), 0.2);
 }
