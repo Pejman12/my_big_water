@@ -7,6 +7,7 @@ uniform vec3 Ka;
 uniform vec3 Kd;
 uniform vec3 Ks;
 uniform float Ns;
+uniform vec4 plane;
 layout (std140) uniform Matrix
 {
     mat4 projection;
@@ -19,6 +20,7 @@ out vec3 out_color;
 void main()
 {
     gl_Position = projection * view * vec4(position, 1.0);
+    gl_ClipDistance[0] = dot(vec4(position, 1.0), plane);
     vec3 n = normalize(normal);
     vec3 l = normalize(lightPosition - position);
     vec3 r = reflect(l, n);

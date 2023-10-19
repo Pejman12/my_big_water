@@ -419,7 +419,7 @@ namespace objl
 
                 Positions.push_back(vpos);
             }
-            // Generate a Vertex Texture Coordinate
+            // Generate a Vertex texture Coordinate
             if (algorithm::firstToken(curline) == "vt")
             {
                 std::vector<std::string> stex;
@@ -613,17 +613,17 @@ namespace objl
             // Check for position & texture - v1/vt1
             if (svert.size() == 2)
             {
-                // Position & Texture
+                // Position & texture
                 vtype = 2;
             }
 
-            // Check for Position, Texture and Normal - v1/vt1/vn1
+            // Check for Position, texture and Normal - v1/vt1/vn1
             // or if Position and Normal - v1//vn1
             if (svert.size() == 3)
             {
                 if (svert[1] != "")
                 {
-                    // Position, Texture, and Normal
+                    // Position, texture, and Normal
                     vtype = 4;
                 }
                 else
@@ -977,17 +977,17 @@ namespace objl
                 {
                     tempMaterial.illum = std::stoi(algorithm::tail(curline));
                 }
-                // Ambient Texture Map
+                // Ambient texture Map
                 if (algorithm::firstToken(curline) == "map_Ka")
                 {
                     tempMaterial.map_Ka = algorithm::tail(curline);
                 }
-                // Diffuse Texture Map
+                // Diffuse texture Map
                 if (algorithm::firstToken(curline) == "map_Kd")
                 {
                     tempMaterial.map_Kd = algorithm::tail(curline);
                 }
-                // Specular Texture Map
+                // Specular texture Map
                 if (algorithm::firstToken(curline) == "map_Ks")
                 {
                     tempMaterial.map_Ks = algorithm::tail(curline);
@@ -997,7 +997,7 @@ namespace objl
                 {
                     tempMaterial.map_Ns = algorithm::tail(curline);
                 }
-                // Alpha Texture Map
+                // Alpha texture Map
                 if (algorithm::firstToken(curline) == "map_d")
                 {
                     tempMaterial.map_d = algorithm::tail(curline);

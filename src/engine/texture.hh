@@ -1,13 +1,10 @@
-#ifndef OBJECT_HEADER
-#define OBJECT_HEADER
+#pragma once
 
+#include <iostream>
+#include <string>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
-#include <iostream>
 #include <memory>
-#include <string>
-#include <vector>
-#include <map>
 
 #define TEST_OPENGL_ERROR()                                                    \
     do                                                                         \
@@ -18,35 +15,24 @@
             << __FUNCTION__  << " line "<< __LINE__ << ", code : " << err << std::endl; \
     } while (0)                                                                \
 
-
-class object {
+class texture {
 public:
-    object(int nb_vbo_);
-    ~object();
+    texture();
+    texture(const std::string &fileName, bool hasTransparency = false);
+    ~texture();
 
-    void add_vbo(const std::string &name, const std::vector<float> &data, GLuint program_id, GLint unit_size);
-    void draw();
+    bool hasTransparency();
 
-    inline GLuint get_vao_id() const
-    {
-        return vao_id;
-    }
+    void bind(int index = 0) const noexcept;
+    void unbind() const noexcept;
 
-    inline GLuint get_vbo_id(int i) const
-    {
-        return vbo_ids[i];
-    }
-
-    std::map<std::string, GLuint> vbo_ids_map;
-    std::map<GLuint, std::size_t> vbo_size_map;
+    static std::shared_ptr<texture> createTextureAttachment(int width, int height);
 
 private:
-    GLuint vao_id;
-    int nb_vbo;
-    int nb_vbo_added;
-    std::vector<GLuint> vbo_ids;
+    std::string fileName;
+    GLuint textureID;
+    GLsizei width, height;
+    bool transparency;
 };
 
-using shared_object = std::shared_ptr<object>;
-
-#endif
+using shared_texture = std::shared_ptr<texture>;

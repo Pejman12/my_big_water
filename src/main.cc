@@ -2,12 +2,13 @@
 #include <err.h>
 #include <GL/glew.h>
 
-#include "engine/camera.hh"
-#include "engine/scene.hh"
-#include "water/water.hh"
+#include "camera.hh"
+#include "scene.hh"
+#include "water.hh"
+#include "waterFBO.hh"
 
-#define SCR_WIDTH 800
-#define SCR_HEIGHT 600
+#define SCR_WIDTH 1280
+#define SCR_HEIGHT 720
 
 #define LIGHT_POS 0.0f, 40.0f, 0.0f
 #define CAM_POS 5.0f, 30.0f, 5.0f
@@ -20,6 +21,8 @@
 #define MAX_DX 10.0f
 #define MAX_DY 10.0f
 
+#define WATER_HEIGHT 3.54f
+
 int width;
 int height;
 int lastX = SCR_WIDTH / 2.0f;
@@ -28,10 +31,12 @@ shared_scene Scene = nullptr;
 shared_water Water = nullptr;
 shared_camera camera = std::make_shared<Camera>(CAM_POS, CAM_UP, CAM_ANGLE);
 glm::vec3 lightPos;
+shared_waterFBO fbos = nullptr;
 
 unsigned int uboMatrix;
 
 void update_view() noexcept {
+    Water->camPos = camera->pos;
     glBindBuffer(GL_UNIFORM_BUFFER, uboMatrix);TEST_OPENGL_ERROR();
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
                     glm::value_ptr(camera->getViewMatrix()));
@@ -58,10 +63,19 @@ void update_light(const glm::vec3 &lightPos_) noexcept {
     glBindBuffer(GL_UNIFORM_BUFFER, 0);TEST_OPENGL_ERROR();
 }
 
-void window_resize(int width, int height) noexcept {
-    update_projection(width, height);
-    glViewport(0,0, width, height);
+void window_resize(int width_, int height_) noexcept {
+    fbos->width = width_;
+    fbos->height = height_;
+    update_projection(width_, height_);
+    glViewport(0, 0, width_, height_);
     TEST_OPENGL_ERROR();
+}
+
+void change_camera_side(float dist) noexcept {
+    camera->pos.y -= dist;
+    camera->alphaX = -camera->alphaX;
+    camera->updateCameraVectors();
+    update_view();
 }
 
 void processSpecialKeys(int key, int, int) noexcept {
@@ -88,7 +102,23 @@ void processMouseScroll(int btn, int, int, int) noexcept {
 
 void draw() noexcept {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    Scene->draw();
+
+    glEnable(GL_CLIP_DISTANCE0);TEST_OPENGL_ERROR();
+
+    fbos->bindRefractionFrameBuffer();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Scene->draw(glm::vec4(0.0, -1.0, 0.0, WATER_HEIGHT + 0.07f));
+
+    fbos->bindReflectionFrameBuffer();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    float dist = 2 * (camera->pos.y - WATER_HEIGHT);
+    change_camera_side(dist);
+    Scene->draw(glm::vec4(0.0, 1.0, 0.0, -WATER_HEIGHT - 0.07f));
+    fbos->unbindCurrentFrameBuffer();
+    change_camera_side(-dist);
+
+    glDisable(GL_CLIP_DISTANCE0);TEST_OPENGL_ERROR();
+    Scene->draw(glm::vec4(0.0, -1.0, 0.0, 100000000));
     Water->draw();
 
     glutSwapBuffers();
@@ -105,7 +135,7 @@ void init_glut(int &argc, char *argv[])
     glutInitWindowPosition(10, 10);
     glutCreateWindow("MY BIG WATER");
     glutDisplayFunc(draw);
-    glutReshapeFunc(window_resize);
+    //glutReshapeFunc(window_resize);
     glutSpecialFunc(processSpecialKeys);
     glutMotionFunc(processMotion);
     glutMouseFunc(processMouseScroll);
@@ -127,7 +157,7 @@ void init_GL()
     //glEnable(GL_CULL_FACE);
     TEST_OPENGL_ERROR();
 
-    glClearColor(0.15,0.15,0.15,1.0);
+    glClearColor(0.53,0.8,0.92,1.0);
     TEST_OPENGL_ERROR();
 
     glPixelStorei(GL_UNPACK_ALIGNMENT,1);
@@ -139,7 +169,6 @@ void update(int value) noexcept
 {
     value = value % 300;
     glutTimerFunc(1000/60, update, ++value);
-
     glutPostRedisplay();
 }
 
@@ -167,9 +196,15 @@ int main(int argc, char *argv[])
     init_GL();
 
     const auto &matMap = obj_raw::getMap(argv[1]);
+    fbos = std::make_shared<waterFBO>(SCR_WIDTH, SCR_HEIGHT);
     Scene = std::make_shared<scene>(matMap);
     Water = std::make_shared<water>(matMap);
+    Water->add_texture(fbos->getRefractionTexture(), water::texture_type::REFRACTION);
+    Water->add_texture(fbos->getReflectionTexture(), water::texture_type::REFLECTION);
+    Water->prog->setTexture("depth", 2);
+    Water->depthTexture = fbos->getRefractionDepthTexture();
     initUBO();
+    // create waterFBO
     glutTimerFunc(1000/60, update, 0);
     glutMainLoop();
 
